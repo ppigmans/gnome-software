@@ -25,7 +25,8 @@ plugin_LTLIBRARIES =					\
 	libgs_plugin_hardcoded-kind.la			\
 	libgs_plugin_hardcoded-popular.la		\
 	libgs_plugin_hardcoded-ratings.la		\
-	libgs_plugin_packagekit.la
+	libgs_plugin_packagekit.la			\
+	libgs_plugin_listaller.la
 
 libgs_plugin_dummy_la_SOURCES = gs-plugin-dummy.c
 libgs_plugin_dummy_la_LIBADD = $(GS_PLUGIN_LIBS)
@@ -66,5 +67,13 @@ libgs_plugin_datadir_filename_la_SOURCES = gs-plugin-datadir-filename.c
 libgs_plugin_datadir_filename_la_LIBADD = $(GS_PLUGIN_LIBS) $(GTK_LIBS)
 libgs_plugin_datadir_filename_la_LDFLAGS = -module -avoid-version
 libgs_plugin_datadir_filename_la_CFLAGS = $(GS_PLUGIN_CFLAGS) $(WARNINGFLAGS_C)
+
+libgs_plugin_listaller_la_SOURCES = gs-plugin-listaller.c
+libgs_plugin_listaller_la_LIBADD = $(GS_PLUGIN_LIBS) $(LISTALLER_LIBS)
+libgs_plugin_listaller_la_LDFLAGS = -module -avoid-version
+libgs_plugin_listaller_la_CFLAGS = $(GS_PLUGIN_CFLAGS) \
+					$(WARNINGFLAGS_C) \
+					$(GEE_CFLAGS) \
+					$(LISTALLER_CFLAGS)
 
 -include $(top_srcdir)/git.mk

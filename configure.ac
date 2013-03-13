@@ -76,6 +76,20 @@ PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.5.6)
 PKG_CHECK_MODULES(PACKAGEKIT, packagekit-glib2 >= 0.8.6)
 
 dnl ---------------------------------------------------------------------------
+dnl - Check if we can build with Listaller
+dnl ---------------------------------------------------------------------------
+LISTALLER_REQUIRED=0.5.7
+AC_ARG_ENABLE(listaller, AS_HELP_STRING([--enable-listaller],[Build with Listaller support]),
+	      enable_listaller=$enableval,enable_listaller=yes)
+if test x$enable_listaller = xyes; then
+	PKG_CHECK_MODULES(LISTALLER, listaller-glib >= $LISTALLER_REQUIRED,,
+				[AC_MSG_ERROR([Can't find Listaller -- please install Listaller>=$LISTALLER_REQUIRED!])])
+	PKG_CHECK_MODULES(GEE, gee-1.0 >= 0.6,,
+				[AC_MSG_ERROR([Can't find Gee -- please install libgee to continue!])])
+fi
+AM_CONDITIONAL(GS_BUILD_LISTALLER_MODULE, test $build_listaller_module = "yes")
+
+dnl ---------------------------------------------------------------------------
 dnl - Makefiles, etc.
 dnl ---------------------------------------------------------------------------
 AC_CONFIG_FILES([
@@ -97,5 +111,6 @@ echo "
         compiler:                  ${CC}
         cflags:                    ${CFLAGS}
         cppflags:                  ${CPPFLAGS}
-"
 
+        Listaller module:          ${enable_listaller}
+"
