@@ -87,7 +87,7 @@ if test x$enable_listaller = xyes; then
 	PKG_CHECK_MODULES(GEE, gee-1.0 >= 0.6,,
 				[AC_MSG_ERROR([Can't find Gee -- please install libgee to continue!])])
 fi
-AM_CONDITIONAL(GS_BUILD_LISTALLER_MODULE, test $build_listaller_module = "yes")
+AM_CONDITIONAL(GS_USE_LISTALLER, test $enable_listaller = "yes")
 
 dnl ---------------------------------------------------------------------------
 dnl - Makefiles, etc.

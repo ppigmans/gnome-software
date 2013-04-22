@@ -68,6 +68,7 @@ libgs_plugin_datadir_filename_la_LIBADD = $(GS_PLUGIN_LIBS) $(GTK_LIBS)
 libgs_plugin_datadir_filename_la_LDFLAGS = -module -avoid-version
 libgs_plugin_datadir_filename_la_CFLAGS = $(GS_PLUGIN_CFLAGS) $(WARNINGFLAGS_C)
 
+if GS_USE_LISTALLER
 libgs_plugin_listaller_la_SOURCES = gs-plugin-listaller.c
 libgs_plugin_listaller_la_LIBADD = $(GS_PLUGIN_LIBS) $(LISTALLER_LIBS)
 libgs_plugin_listaller_la_LDFLAGS = -module -avoid-version
@@ -75,5 +76,6 @@ libgs_plugin_listaller_la_CFLAGS = $(GS_PLUGIN_CFLAGS) \
 					$(WARNINGFLAGS_C) \
 					$(GEE_CFLAGS) \
 					$(LISTALLER_CFLAGS)
+endif
 
 -include $(top_srcdir)/git.mk
