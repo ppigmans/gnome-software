@@ -56,89 +56,9 @@ gs_application_init (GsApplication *application)
 }
 
 static void
-about_activated (GSimpleAction *action,
-		 GVariant      *parameter,
-		 gpointer       app)
+gs_application_initialize_ui (GsApplication *app)
 {
-	const gchar *authors[] = {
-		"Richard Hughes",
-		"Matthias Clasen",
-		"Allan Day",
-		"Ryan Lerch",
-		"William Jon McCann",
-		NULL
-	};
-	const gchar *copyright = "Copyright \xc2\xa9 2013 Richard Hughes, Matthias Clasen";
-	GtkIconTheme *icon_theme;
-	GdkPixbuf *logo;
-	GList *windows;
-	GtkWindow *parent = NULL;
-
-	windows = gtk_application_get_windows (GTK_APPLICATION (app));
-	if (windows)
-		parent = windows->data;
-
-	icon_theme = gtk_icon_theme_get_default ();
-	logo = gtk_icon_theme_load_icon (icon_theme, "gnome-software", 256, 0, NULL);
-
-	gtk_show_about_dialog (parent,
-			       /* TRANSLATORS: this is the title of the about window */
-			       "title", _("About Software"),
-			       /* TRANSLATORS: this is the application name */
-			       "program-name", _("Software"),
-			       "authors", authors,
-			       /* TRANSLATORS: well, we seem to think so, anyway */
-			       "comments", _("A nice way to manage the software on your system."),
-			       "copyright", copyright,
-			       "license-type", GTK_LICENSE_GPL_2_0,
-			       "logo", logo,
-			       "translator-credits", _("translator-credits"),
-			       "version", VERSION,
-			       NULL);
-
-	g_object_unref (logo);
-}
-
-static void
-quit_activated (GSimpleAction *action,
-		GVariant      *parameter,
-		gpointer       app)
-{
-	g_application_quit (G_APPLICATION (app));
-}
-
-static void
-set_mode_activated (GSimpleAction *action,
-		    GVariant      *parameter,
-		    gpointer       data)
-{
-	GsApplication *app = GS_APPLICATION (data);
-	const gchar *mode;
-
-	mode = g_variant_get_string (parameter, NULL);
-	if (g_strcmp0 (mode, "updates") == 0) {
-		gs_shell_set_mode (app->shell, GS_SHELL_MODE_UPDATES);
-	} else if (g_strcmp0 (mode, "installed") == 0) {
-		gs_shell_set_mode (app->shell, GS_SHELL_MODE_INSTALLED);
-	} else if (g_strcmp0 (mode, "overview") == 0) {
-		gs_shell_set_mode (app->shell, GS_SHELL_MODE_OVERVIEW);
-	} else if (g_strcmp0 (mode, "updated") == 0) {
-		gs_shell_set_mode (app->shell, GS_SHELL_MODE_UPDATED);
-	} else {
-		g_warning ("Mode '%s' not recognised", mode);
-	}
-}
-
-static GActionEntry actions[] = {
-	{ "about", about_activated, NULL, NULL, NULL },
-	{ "quit", quit_activated, NULL, NULL, NULL },
-	{ "set-mode", set_mode_activated, "s", NULL, NULL }
-};
-
-static void
-gs_application_startup (GApplication *application)
-{
-	GsApplication *app = GS_APPLICATION (application);
+	static gboolean initialized = FALSE;
 	GtkBuilder *builder;
 	GMenuModel *app_menu;
 	GtkWindow *window;
@@ -146,16 +66,15 @@ gs_application_startup (GApplication *application)
 	GError *error = NULL;
 	gchar *theme;
 
-	G_APPLICATION_CLASS (gs_application_parent_class)->startup (application);
+	if (initialized)
+		return;
 
-	notify_init ("gnome-software");
+	initialized = TRUE;
 
-	g_type_ensure (GS_TYPE_BOX);
+	gtk_icon_theme_append_search_path (gtk_icon_theme_get_default (),
+					   DATADIR "/gnome-software/icons/hicolor");
 
 	/* set up the app menu */
-	g_action_map_add_action_entries (G_ACTION_MAP (app),
-					 actions, G_N_ELEMENTS (actions),
-					 application);
 	builder = gtk_builder_new_from_resource ("/org/gnome/software/app-menu.ui");
 	app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu"));
 	gtk_application_set_app_menu (GTK_APPLICATION (app), app_menu);
@@ -174,7 +93,6 @@ gs_application_startup (GApplication *application)
 	}
 	gtk_css_provider_load_from_file (app->provider, file, NULL);
 	g_object_unref (file);
-	g_free (theme);
 
 	/* setup plugins */
 	app->plugin_loader = gs_plugin_loader_new ();
@@ -214,7 +132,120 @@ gs_application_startup (GApplication *application)
 	window = gs_shell_setup (app->shell, app->plugin_loader, app->cancellable);
 	gtk_application_add_window (GTK_APPLICATION (app), window);
 
-        gtk_window_present (window);
+	g_signal_connect_swapped (app->shell, "loaded",
+				  G_CALLBACK (gtk_window_present), window);
+}
+
+static void
+about_activated (GSimpleAction *action,
+		 GVariant      *parameter,
+		 gpointer       app)
+{
+	const gchar *authors[] = {
+		"Richard Hughes",
+		"Matthias Clasen",
+		"Allan Day",
+		"Ryan Lerch",
+		"William Jon McCann",
+		NULL
+	};
+	const gchar *copyright = "Copyright \xc2\xa9 2013 Richard Hughes, Matthias Clasen";
+	GtkIconTheme *icon_theme;
+	GdkPixbuf *logo;
+	GList *windows;
+	GtkWindow *parent = NULL;
+
+	gs_application_initialize_ui (app);
+
+	windows = gtk_application_get_windows (GTK_APPLICATION (app));
+	if (windows)
+		parent = windows->data;
+
+	icon_theme = gtk_icon_theme_get_default ();
+	logo = gtk_icon_theme_load_icon (icon_theme, "gnome-software", 256, 0, NULL);
+
+	gtk_show_about_dialog (parent,
+			       /* TRANSLATORS: this is the title of the about window */
+			       "title", _("About Software"),
+			       /* TRANSLATORS: this is the application name */
+			       "program-name", _("Software"),
+			       "authors", authors,
+			       /* TRANSLATORS: well, we seem to think so, anyway */
+			       "comments", _("A nice way to manage the software on your system."),
+			       "copyright", copyright,
+			       "license-type", GTK_LICENSE_GPL_2_0,
+			       "logo", logo,
+			       "translator-credits", _("translator-credits"),
+			       "version", VERSION,
+			       NULL);
+
+	g_object_unref (logo);
+}
+
+static void
+quit_activated (GSimpleAction *action,
+		GVariant      *parameter,
+		gpointer       app)
+{
+	GList *windows;
+	GtkWidget *window;
+
+	windows = gtk_application_get_windows (GTK_APPLICATION (app));
+	if (windows) {
+		window = windows->data;
+		gtk_widget_hide (window);
+	}
+}
+
+static void
+set_mode_activated (GSimpleAction *action,
+		    GVariant      *parameter,
+		    gpointer       data)
+{
+	GsApplication *app = GS_APPLICATION (data);
+	const gchar *mode;
+	GList *windows;
+	GtkWindow *window = NULL;
+
+	gs_application_initialize_ui (app);
+	windows = gtk_application_get_windows (GTK_APPLICATION (app));
+	if (windows) {
+		window = windows->data;
+		gtk_window_present (window);
+	}
+
+	mode = g_variant_get_string (parameter, NULL);
+	if (g_strcmp0 (mode, "updates") == 0) {
+		gs_shell_set_mode (app->shell, GS_SHELL_MODE_UPDATES);
+	} else if (g_strcmp0 (mode, "installed") == 0) {
+		gs_shell_set_mode (app->shell, GS_SHELL_MODE_INSTALLED);
+	} else if (g_strcmp0 (mode, "overview") == 0) {
+		gs_shell_set_mode (app->shell, GS_SHELL_MODE_OVERVIEW);
+	} else if (g_strcmp0 (mode, "updated") == 0) {
+		gs_shell_set_mode (app->shell, GS_SHELL_MODE_UPDATED);
+	} else {
+		g_warning ("Mode '%s' not recognised", mode);
+	}
+}
+
+static GActionEntry actions[] = {
+	{ "about", about_activated, NULL, NULL, NULL },
+	{ "quit", quit_activated, NULL, NULL, NULL },
+	{ "set-mode", set_mode_activated, "s", NULL, NULL }
+};
+
+static void
+gs_application_startup (GApplication *application)
+{
+	G_APPLICATION_CLASS (gs_application_parent_class)->startup (application);
+
+	notify_init ("gnome-software");
+
+	g_type_ensure (GS_TYPE_BOX);
+
+	g_action_map_add_action_entries (G_ACTION_MAP (application),
+					 actions, G_N_ELEMENTS (actions),
+					 application);
 }
 
 static void
@@ -232,6 +263,7 @@ gs_application_finalize (GObject *object)
 	g_clear_object (&app->cancellable);
 	g_clear_object (&app->shell);
 	g_clear_object (&app->provider);
+
 	G_OBJECT_CLASS (gs_application_parent_class)->finalize (object);
 }
 
