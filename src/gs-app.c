@@ -61,7 +61,6 @@ struct GsAppPrivate
 	GsAppQuality		 summary_quality;
 	gchar			*summary_missing;
 	GsAppQuality		 description_quality;
-	GPtrArray		*keywords;
 	gchar			*menu_path;
 	gchar			*origin;
 	gchar			*update_version;
@@ -1356,9 +1355,6 @@ gs_app_set_to_be_installed (AsApp *app, gboolean to_be_installed)
 void
 gs_app_subsume (AsApp *app, AsApp *other)
 {
-//	const gchar *tmp;
-//	GList *keys;
-//	GList *l;
 	AsApp *app_tmp;
 	GsAppPrivate *priv2 = GS_APP(other)->priv;
 	GsAppPrivate *priv = GS_APP(app)->priv;
@@ -1380,43 +1376,17 @@ gs_app_subsume (AsApp *app, AsApp *other)
 	/* save any properties we already know */
 	if (priv2->sources->len > 0)
 		gs_app_set_sources (app, priv2->sources);
-//	if (priv2->project_group != NULL)
-//		as_app_set_project_group (app, priv2->project_group, -1);
-//	if (priv2->name != NULL)
-//		gs_app_set_name (app, priv2->name_quality, priv2->name);
-//	if (priv2->summary != NULL)
-//		gs_app_set_summary (app, priv2->summary_quality, priv2->summary);
-//	if (priv2->description != NULL)
-//		gs_app_set_description (app, priv2->description_quality, priv2->description);
 	if (priv2->update_details != NULL)
 		gs_app_set_update_details (app, priv2->update_details);
 	if (priv2->update_version != NULL)
 		gs_app_set_update_version_internal (app, priv2->update_version);
 	if (priv2->pixbuf != NULL)
 		gs_app_set_pixbuf (app, priv2->pixbuf);
-//	if (priv->categories != priv2->categories) {
-//		for (i = 0; i < priv2->categories->len; i++) {
-//			tmp = g_ptr_array_index (priv2->categories, i);
-//			as_app_has_category (app, tmp);
-//		}
-//	}
 	for (i = 0; i < priv2->related->len; i++) {
 		app_tmp = g_ptr_array_index (priv2->related, i);
 		gs_app_add_related (app, app_tmp);
 	}
 	priv->kudos |= priv2->kudos;
-
-	/* copy metadata from @other to @app unless the app already has a key
-	 * of that name */
-//	keys = g_hash_table_get_keys (priv2->metadata);
-//	for (l = keys; l != NULL; l = l->next) {
-//		tmp = g_hash_table_lookup (as_app_get_metadata (app), l->data);
-//		if (tmp != NULL)
-//			continue;
-//		tmp = g_hash_table_lookup (priv2->metadata, l->data);
-//		as_app_add_metadata (app, l->data, tmp, -1);
-//	}
-//	g_list_free (keys);
 
 	as_app_subsume (app, other);
 }
@@ -1471,28 +1441,33 @@ static void
 gs_app_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
 	AsApp *app = AS_APP (object);
+	const gchar *tmp;
 
 	switch (prop_id) {
 	case PROP_ID:
-		as_app_set_id_full (app, g_value_get_string (value), -1);
+		tmp = g_value_get_string (value);
+		if (tmp != NULL)
+			as_app_set_id_full (app, tmp, -1);
 		break;
 	case PROP_NAME:
-		gs_app_set_name (app,
-				 GS_APP_QUALITY_UNKNOWN,
-				 g_value_get_string (value));
+		tmp = g_value_get_string (value);
+		if (tmp != NULL)
+			gs_app_set_name (app, GS_APP_QUALITY_UNKNOWN, tmp);
 		break;
 	case PROP_VERSION:
-		gs_app_set_version (app, g_value_get_string (value));
+		tmp = g_value_get_string (value);
+		if (tmp != NULL)
+			gs_app_set_version (app, tmp);
 		break;
 	case PROP_SUMMARY:
-		gs_app_set_summary (app,
-				    GS_APP_QUALITY_UNKNOWN,
-				    g_value_get_string (value));
+		tmp = g_value_get_string (value);
+		if (tmp != NULL)
+			gs_app_set_summary (app, GS_APP_QUALITY_UNKNOWN, tmp);
 		break;
 	case PROP_DESCRIPTION:
-		gs_app_set_description (app,
-					GS_APP_QUALITY_UNKNOWN,
-					g_value_get_string (value));
+		tmp = g_value_get_string (value);
+		if (tmp != NULL)
+			gs_app_set_description (app, GS_APP_QUALITY_UNKNOWN, tmp);
 		break;
 	case PROP_RATING:
 		gs_app_set_rating (app, g_value_get_int (value));
