@@ -42,7 +42,7 @@ const gchar **
 gs_plugin_get_deps (GsPlugin *plugin)
 {
 	static const gchar *deps[] = {
-		"appstream",		/* need GsApp category data */
+		"appstream",		/* need AsApp category data */
 		"menu-spec-categories",	/* need menu-spec data */
 		NULL };
 	return deps;
@@ -53,7 +53,7 @@ gs_plugin_get_deps (GsPlugin *plugin)
  */
 static gboolean
 gs_plugin_refine_app_category (GsPlugin *plugin,
-			       GsApp *app,
+			       AsApp *app,
 			       const MenuSpecData *cat)
 {
 	const MenuSpecData *msdata;
@@ -69,7 +69,7 @@ gs_plugin_refine_app_category (GsPlugin *plugin,
 			continue;
 		if (!g_str_has_prefix (msdata[i].path, cat->path))
 			continue;
-		ret = gs_app_has_category (app, tmp + 2);
+		ret = as_app_has_category (app, tmp + 2);
 		if (ret) {
 			tmp = g_strdup_printf ("%s → %s",
 					       gettext (cat->text),
@@ -86,7 +86,7 @@ gs_plugin_refine_app_category (GsPlugin *plugin,
  * gs_plugin_refine_app:
  */
 static gboolean
-gs_plugin_refine_app (GsPlugin *plugin, GsApp *app)
+gs_plugin_refine_app (GsPlugin *plugin, AsApp *app)
 {
 	const MenuSpecData *msdata;
 	gboolean ret = FALSE;
@@ -99,7 +99,7 @@ gs_plugin_refine_app (GsPlugin *plugin, GsApp *app)
 		tmp = g_strstr_len (msdata[i].path, -1, "::");
 		if (tmp != NULL)
 			continue;
-		ret = gs_app_has_category (app, msdata[i].path);
+		ret = as_app_has_category (app, msdata[i].path);
 		if (ret) {
 			ret = gs_plugin_refine_app_category (plugin, app,
 							     &msdata[i]);
@@ -120,7 +120,7 @@ gs_plugin_refine (GsPlugin *plugin,
 		  GError **error)
 {
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret;
 
 	/* nothing to do here */
@@ -128,7 +128,7 @@ gs_plugin_refine (GsPlugin *plugin,
 		goto out;
 
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		if (gs_app_get_menu_path (app) == NULL) {
 			ret = gs_plugin_refine_app (plugin, app);
 			if (!ret) {

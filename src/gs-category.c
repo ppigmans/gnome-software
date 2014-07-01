@@ -116,7 +116,7 @@ gs_category_get_parent (GsCategory *category)
 /**
  * gs_category_get_subcategories:
  *
- * Return value: (element-type GsApp) (transfer container): A list of subcategories
+ * Return value: (element-type AsApp) (transfer container): A list of subcategories
  **/
 GList *
 gs_category_get_subcategories (GsCategory *category)

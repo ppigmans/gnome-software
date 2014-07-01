@@ -68,7 +68,7 @@ static void
 app_tile_clicked (GsAppTile *tile, gpointer data)
 {
 	GsShellCategory *shell = GS_SHELL_CATEGORY (data);
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_app_tile_get_app (tile);
 	gs_shell_show_app (shell->priv->shell, app);
@@ -86,7 +86,7 @@ gs_shell_category_get_apps_cb (GObject *source_object,
 	gint i = 0;
 	GList *l;
 	GList *list;
-	GsApp *app;
+	AsApp *app;
 	GtkWidget *tile;
 	GsShellCategory *shell = GS_SHELL_CATEGORY (user_data);
 	GsShellCategoryPrivate *priv = shell->priv;
@@ -106,7 +106,7 @@ gs_shell_category_get_apps_cb (GObject *source_object,
 	gtk_grid_remove_column (GTK_GRID (priv->category_detail_grid), 0);
 
 	for (l = list, i = 0; l != NULL; l = l->next, i++) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		tile = gs_app_tile_new (app);
 		g_signal_connect (tile, "clicked",
 				  G_CALLBACK (app_tile_clicked), shell);

@@ -48,7 +48,7 @@ struct GsShellDetailsPrivate
 	GtkBuilder		*builder;
 	GCancellable		*cancellable;
 	gboolean		 cache_valid;
-	GsApp			*app;
+	AsApp			*app;
 	GsShell			*shell;
 	GtkWidget		*history_dialog;
 	GtkWidget		*star;
@@ -156,7 +156,7 @@ gs_shell_details_refresh (GsShellDetails *shell_details)
 	gtk_widget_show (widget);
 
 	kind = gs_app_get_kind (priv->app);
-	state = gs_app_get_state (priv->app);
+	state = as_app_get_state (priv->app);
 
 	/* label */
 	widget = GTK_WIDGET (gtk_builder_get_object (priv->builder, "header_label"));
@@ -286,7 +286,7 @@ gs_shell_details_refresh (GsShellDetails *shell_details)
  * gs_shell_details_notify_state_changed_cb:
  **/
 static void
-gs_shell_details_notify_state_changed_cb (GsApp *app,
+gs_shell_details_notify_state_changed_cb (AsApp *app,
 					  GParamSpec *pspec,
 					  GsShellDetails *shell_details)
 {
@@ -332,10 +332,10 @@ gs_shell_details_refresh_screenshots (GsShellDetails *shell_details)
 	guint i;
 
 	/* treat screenshots differently */
-	if (gs_app_get_id_kind (priv->app) == AS_ID_KIND_FONT) {
+	if (as_app_get_id_kind (priv->app) == AS_ID_KIND_FONT) {
 		gs_container_remove_all (GTK_CONTAINER (priv->box_details_screenshot_thumbnails));
 		gs_container_remove_all (GTK_CONTAINER (priv->box_details_screenshot_main));
-		screenshots = gs_app_get_screenshots (priv->app);
+		screenshots = as_app_get_screenshots (priv->app);
 		for (i = 0; i < screenshots->len; i++) {
 			ss = g_ptr_array_index (screenshots, i);
 
@@ -364,7 +364,7 @@ gs_shell_details_refresh_screenshots (GsShellDetails *shell_details)
 
 	/* set screenshots */
 	gs_container_remove_all (GTK_CONTAINER (priv->box_details_screenshot_main));
-	screenshots = gs_app_get_screenshots (priv->app);
+	screenshots = as_app_get_screenshots (priv->app);
 	gtk_widget_set_visible (priv->box_details_screenshot, screenshots->len > 0);
 	if (screenshots->len == 0) {
 		gs_container_remove_all (GTK_CONTAINER (priv->box_details_screenshot_thumbnails));
@@ -437,7 +437,7 @@ gs_shell_details_website_cb (GtkWidget *widget, GsShellDetails *shell_details)
 	const gchar *url;
 	gboolean ret;
 
-	url = gs_app_get_url (priv->app, GS_APP_URL_KIND_HOMEPAGE);
+	url = as_app_get_url_item (priv->app, AS_URL_KIND_HOMEPAGE);
 	ret = gtk_show_uri (NULL, url, GDK_CURRENT_TIME, &error);
 	if (!ret) {
 		g_warning ("spawn of '%s' failed", url);
@@ -492,10 +492,10 @@ out:
  * gs_shell_details_is_addon_id_kind
  **/
 static gboolean
-gs_shell_details_is_addon_id_kind (GsApp *app)
+gs_shell_details_is_addon_id_kind (AsApp *app)
 {
         AsIdKind id_kind;
-        id_kind = gs_app_get_id_kind (app);
+        id_kind = as_app_get_id_kind (app);
         if (id_kind == AS_ID_KIND_DESKTOP)
                 return FALSE;
         if (id_kind == AS_ID_KIND_WEB_APP)
@@ -520,7 +520,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	guint64 updated;
 
 	/* change widgets */
-	tmp = gs_app_get_name (priv->app);
+	tmp = as_app_get_name (priv->app, NULL);
 	widget2 = GTK_WIDGET (gtk_builder_get_object (priv->builder, "application_details_header"));
 	if (tmp != NULL && tmp[0] != '\0') {
 		gtk_label_set_label (GTK_LABEL (priv->application_details_title), tmp);
@@ -530,7 +530,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 		gtk_widget_set_visible (priv->application_details_title, FALSE);
 		gtk_label_set_label (GTK_LABEL (widget2), "");
 	}
-	tmp = gs_app_get_summary (priv->app);
+	tmp = as_app_get_comment (priv->app, NULL);
 	if (tmp != NULL && tmp[0] != '\0') {
 		gtk_label_set_label (GTK_LABEL (priv->application_details_summary), tmp);
 		gtk_widget_set_visible (priv->application_details_summary, TRUE);
@@ -539,11 +539,11 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* set the description */
-	tmp = gs_app_get_description (priv->app);
+	tmp = as_app_get_description (priv->app, NULL);
 	gs_shell_details_set_description (shell_details, tmp);
 
 	/* set the icon */
-	tmp = gs_app_get_metadata_item (priv->app, "DataDir::desktop-icon");
+	tmp = as_app_get_metadata_item (priv->app, "DataDir::desktop-icon");
 	if (tmp != NULL) {
 		pixbuf = gs_pixbuf_load (tmp, 96, &error);
 		if (pixbuf == NULL) {
@@ -554,7 +554,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 	if (pixbuf == NULL)
 		pixbuf = gs_app_get_pixbuf (priv->app);
-	if (pixbuf == NULL && gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL) {
+	if (pixbuf == NULL && as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL) {
 		if (gs_app_get_kind (priv->app) == GS_APP_KIND_SOURCE)
 			pixbuf = gs_pixbuf_load ("x-package-repository", 96, NULL);
 		else if (gs_shell_details_is_addon_id_kind (priv->app))
@@ -569,7 +569,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 		gtk_widget_set_visible (priv->application_details_icon, FALSE);
 	}
 
-	tmp = gs_app_get_url (priv->app, GS_APP_URL_KIND_HOMEPAGE);
+	tmp = as_app_get_url_item (priv->app, AS_URL_KIND_HOMEPAGE);
 	if (tmp != NULL && tmp[0] != '\0') {
 		gtk_widget_set_visible (priv->button_details_website, TRUE);
 	} else {
@@ -577,7 +577,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* set the project group */
-	tmp = gs_app_get_project_group (priv->app);
+	tmp = as_app_get_project_group (priv->app);
 	if (tmp == NULL) {
 		gtk_widget_set_visible (priv->label_details_developer_title, FALSE);
 		gtk_widget_set_visible (priv->label_details_developer_value, FALSE);
@@ -588,7 +588,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* set the licence */
-	tmp = gs_app_get_licence (priv->app);
+	tmp = as_app_get_project_license (priv->app);
 	if (tmp == NULL) {
 		/* TRANSLATORS: this is where the licence is not known */
 		gtk_label_set_label (GTK_LABEL (priv->label_details_licence_value), C_("license", "Unknown"));
@@ -655,14 +655,14 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 		gtk_label_set_label (GTK_LABEL (priv->label_details_origin_value), tmp);
 	}
 	gtk_widget_set_visible (priv->label_details_origin_value,
-				gs_app_get_state (priv->app) == AS_APP_STATE_INSTALLED ||
-				gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
+				as_app_get_state (priv->app) == AS_APP_STATE_INSTALLED ||
+				as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
 	gtk_widget_set_visible (priv->label_details_origin_title,
-				gs_app_get_state (priv->app) == AS_APP_STATE_INSTALLED ||
-				gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
+				as_app_get_state (priv->app) == AS_APP_STATE_INSTALLED ||
+				as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
 
 	/* set the rating */
-	switch (gs_app_get_id_kind (priv->app)) {
+	switch (as_app_get_id_kind (priv->app)) {
 	case AS_ID_KIND_WEB_APP:
 		gtk_widget_set_visible (priv->star, FALSE);
 		break;
@@ -681,20 +681,20 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* don't show a missing rating on a local file */
-	if (gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL &&
+	if (as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL &&
 	    gs_app_get_rating (priv->app) < 0)
 		gtk_widget_set_visible (priv->star, FALSE);
 
 	/* only mark the stars as sensitive if the application is installed */
 	gtk_widget_set_sensitive (priv->star,
-				  gs_app_get_state (priv->app) == AS_APP_STATE_INSTALLED);
+				  as_app_get_state (priv->app) == AS_APP_STATE_INSTALLED);
 
 	/* only show launch button when the application is installed */
-	switch (gs_app_get_state (priv->app)) {
+	switch (as_app_get_state (priv->app)) {
 	case AS_APP_STATE_INSTALLED:
 	case AS_APP_STATE_UPDATABLE:
-		if (gs_app_get_id_kind (priv->app) == AS_ID_KIND_DESKTOP ||
-		    gs_app_get_id_kind (priv->app) == AS_ID_KIND_WEB_APP) {
+		if (as_app_get_id_kind (priv->app) == AS_ID_KIND_DESKTOP ||
+		    as_app_get_id_kind (priv->app) == AS_ID_KIND_WEB_APP) {
 			gtk_widget_set_visible (priv->button_details_launch, TRUE);
 		} else {
 			gtk_widget_set_visible (priv->button_details_launch, FALSE);
@@ -707,7 +707,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 
 	/* make history button insensitive if there is none */
 	history = gs_app_get_history (priv->app);
-	switch (gs_app_get_id_kind (priv->app)) {
+	switch (as_app_get_id_kind (priv->app)) {
 	case AS_ID_KIND_WEB_APP:
 		gtk_widget_set_visible (priv->button_history, FALSE);
 		break;
@@ -718,7 +718,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* don't show missing history on a local file */
-	if (gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL &&
+	if (as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL &&
 	    history->len == 0)
 		gtk_widget_set_visible (priv->button_history, FALSE);
 
@@ -735,7 +735,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	/* is this a repo-release */
 	switch (gs_app_get_kind (priv->app)) {
 	case GS_APP_KIND_SOURCE:
-		gtk_widget_set_visible (priv->infobar_details_repo, gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
+		gtk_widget_set_visible (priv->infobar_details_repo, as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
 		break;
 	default:
 		gtk_widget_set_visible (priv->infobar_details_repo, FALSE);
@@ -743,11 +743,11 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* installing a app with a repo file */
-	tmp = gs_app_get_metadata_item (priv->app, "PackageKit::has-source");
+	tmp = as_app_get_metadata_item (priv->app, "PackageKit::has-source");
 	switch (gs_app_get_kind (priv->app)) {
 	case GS_APP_KIND_NORMAL:
 	case GS_APP_KIND_SYSTEM:
-		gtk_widget_set_visible (priv->infobar_details_app_repo, tmp != NULL && gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
+		gtk_widget_set_visible (priv->infobar_details_app_repo, tmp != NULL && as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
 		break;
 	default:
 		gtk_widget_set_visible (priv->infobar_details_app_repo, FALSE);
@@ -758,7 +758,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	switch (gs_app_get_kind (priv->app)) {
 	case GS_APP_KIND_NORMAL:
 	case GS_APP_KIND_SYSTEM:
-		gtk_widget_set_visible (priv->infobar_details_app_norepo, tmp == NULL && gs_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
+		gtk_widget_set_visible (priv->infobar_details_app_norepo, tmp == NULL && as_app_get_state (priv->app) == AS_APP_STATE_AVAILABLE_LOCAL);
 		break;
 	default:
 		gtk_widget_set_visible (priv->infobar_details_app_norepo, FALSE);
@@ -766,7 +766,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* installing a webapp */
-	switch (gs_app_get_id_kind (priv->app)) {
+	switch (as_app_get_id_kind (priv->app)) {
 	case AS_ID_KIND_WEB_APP:
 		gtk_widget_set_visible (priv->infobar_details_webapp, TRUE);
 		break;
@@ -776,7 +776,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	}
 
 	/* only show the "select addons" string if the app isn't yet installed */
-	switch (gs_app_get_state (priv->app)) {
+	switch (as_app_get_state (priv->app)) {
 	case AS_APP_STATE_INSTALLED:
 	case AS_APP_STATE_UPDATABLE:
 		gtk_widget_set_visible (priv->label_addons_uninstalled_app, FALSE);
@@ -790,7 +790,7 @@ gs_shell_details_refresh_all (GsShellDetails *shell_details)
 	gtk_widget_set_visible (priv->box_addons, addons != NULL);
 	for (l = addons; l; l = l->next) {
 		/* show checkboxes in front of addons if the app isn't yet installed */
-		switch (gs_app_get_state (priv->app)) {
+		switch (as_app_get_state (priv->app)) {
 		case AS_APP_STATE_INSTALLED:
 		case AS_APP_STATE_UPDATABLE:
 			break;
@@ -817,11 +817,11 @@ list_sort_func (GtkListBoxRow *a,
                 GtkListBoxRow *b,
                 gpointer user_data)
 {
-	GsApp *a1 = gs_app_addon_row_get_addon (GS_APP_ADDON_ROW (a));
-	GsApp *a2 = gs_app_addon_row_get_addon (GS_APP_ADDON_ROW (b));
+	AsApp *a1 = gs_app_addon_row_get_addon (GS_APP_ADDON_ROW (a));
+	AsApp *a2 = gs_app_addon_row_get_addon (GS_APP_ADDON_ROW (b));
 
-	return g_strcmp0 (gs_app_get_name (a1),
-	                  gs_app_get_name (a2));
+	return g_strcmp0 (as_app_get_name (a1, NULL),
+	                  as_app_get_name (a2, NULL));
 }
 
 static void gs_shell_details_addon_selected_cb (GsAppAddonRow *row, GParamSpec *pspec, GsShellDetails *shell_details);
@@ -837,7 +837,7 @@ gs_shell_details_refresh_addons (GsShellDetails *shell_details)
 
 	addons = gs_app_get_addons (priv->app);
 	for (i = 0; i < addons->len; i++) {
-		GsApp *addon;
+		AsApp *addon;
 		GtkWidget *row;
 
 	        addon = g_ptr_array_index (addons, i);
@@ -872,7 +872,7 @@ gs_shell_details_app_refine_cb (GObject *source,
 						  &error);
 	if (!ret) {
 		g_warning ("failed to refine %s: %s",
-			   gs_app_get_id (priv->app),
+			   as_app_get_id (priv->app),
 			   error->message);
 		g_error_free (error);
 		return;
@@ -902,7 +902,7 @@ gs_shell_details_filename_to_app_cb (GObject *source,
 							    res,
 							    &error);
 	if (priv->app == NULL) {
-		g_warning ("failed to convert to GsApp: %s", error->message);
+		g_warning ("failed to convert to AsApp: %s", error->message);
 		g_error_free (error);
 		return;
 	}
@@ -952,7 +952,7 @@ gs_shell_details_set_filename (GsShellDetails *shell_details, const gchar *filen
  * gs_shell_details_set_app:
  **/
 void
-gs_shell_details_set_app (GsShellDetails *shell_details, GsApp *app)
+gs_shell_details_set_app (GsShellDetails *shell_details, AsApp *app)
 {
 	GsShellDetailsPrivate *priv = shell_details->priv;
 	gchar *app_dump;
@@ -1000,7 +1000,7 @@ gs_shell_details_set_app (GsShellDetails *shell_details, GsApp *app)
 	gs_shell_details_refresh_all (shell_details);
 }
 
-GsApp *
+AsApp *
 gs_shell_details_get_app (GsShellDetails *shell_details)
 {
 	return shell_details->priv->app;
@@ -1008,7 +1008,7 @@ gs_shell_details_get_app (GsShellDetails *shell_details)
 
 typedef struct {
 	GsShellDetails	*shell_details;
-	GsApp		*app;
+	AsApp		*app;
 } GsShellDetailsHelper;
 
 /**
@@ -1029,7 +1029,7 @@ gs_shell_details_app_installed_cb (GObject *source,
 						  &error);
 	if (!ret) {
 		g_warning ("failed to install %s: %s",
-			   gs_app_get_id (helper->app),
+			   as_app_get_id (helper->app),
 			   error->message);
 		gs_app_notify_failed_modal (helper->shell_details->priv->builder,
 					    helper->app,
@@ -1040,7 +1040,7 @@ gs_shell_details_app_installed_cb (GObject *source,
 	}
 
 	/* only show this if the window is not active */
-	if (gs_app_get_state (helper->app) != AS_APP_STATE_QUEUED_FOR_INSTALL &&
+	if (as_app_get_state (helper->app) != AS_APP_STATE_QUEUED_FOR_INSTALL &&
 	    !gs_shell_is_active (helper->shell_details->priv->shell))
 		gs_app_notify_installed (helper->app);
 	gs_shell_details_refresh_all (helper->shell_details);
@@ -1067,7 +1067,7 @@ gs_shell_details_app_removed_cb (GObject *source,
 						  &error);
 	if (!ret) {
 		g_warning ("failed to remove %s: %s",
-			   gs_app_get_id (helper->app),
+			   as_app_get_id (helper->app),
 			   error->message);
 		gs_app_notify_failed_modal (helper->shell_details->priv->builder,
 					    helper->app,
@@ -1087,7 +1087,7 @@ gs_shell_details_app_removed_cb (GObject *source,
  * gs_shell_details_app_remove
  **/
 static void
-gs_shell_details_app_remove (GsShellDetails *shell_details, GsApp *app)
+gs_shell_details_app_remove (GsShellDetails *shell_details, AsApp *app)
 {
 	GsShellDetailsHelper *helper;
 	GsShellDetailsPrivate *priv = shell_details->priv;
@@ -1102,7 +1102,7 @@ gs_shell_details_app_remove (GsShellDetails *shell_details, GsApp *app)
 				/* TRANSLATORS: this is a prompt message, and
 				 * '%s' is an application summary, e.g. 'GNOME Clocks' */
 				_("Are you sure you want to remove %s?"),
-				gs_app_get_name (app));
+				as_app_get_name (app, NULL));
 	g_string_prepend (markup, "<b>");
 	g_string_append (markup, "</b>");
 	dialog = gtk_message_dialog_new (window,
@@ -1114,15 +1114,15 @@ gs_shell_details_app_remove (GsShellDetails *shell_details, GsApp *app)
 	gtk_message_dialog_format_secondary_markup (GTK_MESSAGE_DIALOG (dialog),
 						    /* TRANSLATORS: longer dialog text */
 						    _("%s will be removed, and you will have to install it to use it again."),
-						    gs_app_get_name (app));
+						    as_app_get_name (app, NULL));
 	/* TRANSLATORS: this is button text to remove the application */
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("Remove"), GTK_RESPONSE_OK);
-	if (gs_app_get_state (app) == AS_APP_STATE_INSTALLED)
+	if (as_app_get_state (app) == AS_APP_STATE_INSTALLED)
 		response = gtk_dialog_run (GTK_DIALOG (dialog));
 	else
 		response = GTK_RESPONSE_OK; /* pending install */
 	if (response == GTK_RESPONSE_OK) {
-		g_debug ("remove %s", gs_app_get_id (app));
+		g_debug ("remove %s", as_app_get_id (app));
 		helper = g_new0 (GsShellDetailsHelper, 1);
 		helper->shell_details = g_object_ref (shell_details);
 		helper->app = g_object_ref (app);
@@ -1152,7 +1152,7 @@ gs_shell_details_app_remove_button_cb (GtkWidget *widget, GsShellDetails *shell_
  * gs_shell_details_app_install:
  **/
 static void
-gs_shell_details_app_install (GsShellDetails *shell_details, GsApp *app)
+gs_shell_details_app_install (GsShellDetails *shell_details, AsApp *app)
 {
 	GsShellDetailsPrivate *priv = shell_details->priv;
 	GsShellDetailsHelper *helper;
@@ -1181,9 +1181,9 @@ gs_shell_details_app_install_button_cb (GtkWidget *widget, GsShellDetails *shell
 	addons = gtk_container_get_children (GTK_CONTAINER (priv->list_box_addons));
 	for (l = addons; l; l = l->next) {
 		if (gs_app_addon_row_get_selected (l->data)) {
-			GsApp *addon = gs_app_addon_row_get_addon (l->data);
+			AsApp *addon = gs_app_addon_row_get_addon (l->data);
 
-			if (gs_app_get_state (addon) == AS_APP_STATE_AVAILABLE)
+			if (as_app_get_state (addon) == AS_APP_STATE_AVAILABLE)
 				gs_app_set_to_be_installed (addon, TRUE);
 		}
 	}
@@ -1201,14 +1201,14 @@ gs_shell_details_addon_selected_cb (GsAppAddonRow *row,
                                     GsShellDetails *shell_details)
 {
 	GsShellDetailsPrivate *priv = shell_details->priv;
-	GsApp *addon;
+	AsApp *addon;
 
 	addon = gs_app_addon_row_get_addon (row);
 
 	/* If the main app is already installed, ticking the addon checkbox
 	 * triggers an immediate install. Otherwise we'll install the addon
 	 * together with the main app. */
-	switch (gs_app_get_state (priv->app)) {
+	switch (as_app_get_state (priv->app)) {
 	case AS_APP_STATE_INSTALLED:
 	case AS_APP_STATE_UPDATABLE:
 		if (gs_app_addon_row_get_selected (row))
@@ -1233,7 +1233,7 @@ gs_shell_details_app_launch_button_cb (GtkWidget *widget, GsShellDetails *shell_
 	GdkDisplay *display;
 	const gchar *desktop_id;
 
-	desktop_id = gs_app_get_id_full (shell_details->priv->app);
+	desktop_id = as_app_get_id_full (shell_details->priv->app);
 	display = gdk_display_get_default ();
 	appinfo = G_APP_INFO (g_desktop_app_info_new (desktop_id));
 	if (appinfo == NULL) {
@@ -1286,7 +1286,7 @@ gs_shell_details_app_set_ratings_cb (GObject *source,
 						  &error);
 	if (!ret) {
 		g_warning ("failed to set rating %s: %s",
-			   gs_app_get_id (priv->app),
+			   as_app_get_id (priv->app),
 			   error->message);
 		g_error_free (error);
 	}
@@ -1303,7 +1303,7 @@ gs_shell_details_rating_changed_cb (GsStarWidget *star,
 	GsShellDetailsPrivate *priv = shell_details->priv;
 
 	g_debug ("%s rating changed from %i%% to %i%%",
-		 gs_app_get_id (priv->app),
+		 as_app_get_id (priv->app),
 		 gs_app_get_rating (priv->app),
 		 rating);
 

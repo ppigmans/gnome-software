@@ -121,23 +121,23 @@ gs_grab_focus_when_mapped (GtkWidget *widget)
 }
 
 void
-gs_app_notify_installed (GsApp *app)
+gs_app_notify_installed (AsApp *app)
 {
 	gchar *summary;
 	GNotification *n;
 
 	/* TRANSLATORS: this is the summary of a notification that an application
 	 * has been successfully installed */
-	summary = g_strdup_printf (_("%s is now installed"), gs_app_get_name (app));
+	summary = g_strdup_printf (_("%s is now installed"), as_app_get_name (app, NULL));
 	n = g_notification_new (summary);
-	if (gs_app_get_id_kind (app) == AS_ID_KIND_DESKTOP) {
+	if (as_app_get_id_kind (app) == AS_ID_KIND_DESKTOP) {
 		/* TRANSLATORS: this is button that opens the newly installed application */
 		g_notification_add_button_with_target (n, _("Launch"),
 						       "app.launch", "s",
-						       gs_app_get_id_full (app));
+						       as_app_get_id_full (app));
 	}
 	g_notification_set_default_action_and_target  (n, "app.details", "(ss)",
-						       gs_app_get_id_full (app), "");
+						       as_app_get_id_full (app), "");
 	g_application_send_notification (g_application_get_default (), "installed", n);
 	g_object_unref (n);
 	g_free (summary);
@@ -148,7 +148,7 @@ gs_app_notify_installed (GsApp *app)
  **/
 void
 gs_app_notify_failed_modal (GtkBuilder *builder,
-			    GsApp *app,
+			    AsApp *app,
 			    GsPluginLoaderAction action,
 			    const GError *error)
 {
@@ -162,12 +162,12 @@ gs_app_notify_failed_modal (GtkBuilder *builder,
 	case GS_PLUGIN_LOADER_ACTION_INSTALL:
 		/* TRANSLATORS: this is when the install fails */
 		msg = g_strdup_printf (_("Installation of %s failed."),
-				       gs_app_get_name (app));
+				       as_app_get_name (app, NULL));
 		break;
 	case GS_PLUGIN_LOADER_ACTION_REMOVE:
 		/* TRANSLATORS: this is when the remove fails */
 		msg = g_strdup_printf (_("Removal of %s failed."),
-				       gs_app_get_name (app));
+				       as_app_get_name (app, NULL));
 		break;
 	default:
 		g_assert_not_reached ();

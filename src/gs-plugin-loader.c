@@ -80,17 +80,17 @@ gs_plugin_loader_error_quark (void)
 static gint
 gs_plugin_loader_app_sort_cb (gconstpointer a, gconstpointer b)
 {
-	return g_strcmp0 (gs_app_get_name (GS_APP (a)),
-			  gs_app_get_name (GS_APP (b)));
+	return g_strcmp0 (as_app_get_name (AS_APP (a), NULL),
+			  as_app_get_name (AS_APP (b), NULL));
 }
 
 /**
  * gs_plugin_loader_dedupe:
  */
-GsApp *
-gs_plugin_loader_dedupe (GsPluginLoader *plugin_loader, GsApp *app)
+AsApp *
+gs_plugin_loader_dedupe (GsPluginLoader *plugin_loader, AsApp *app)
 {
-	GsApp *new_app;
+	AsApp *new_app;
 	GsPluginLoaderPrivate *priv = plugin_loader->priv;
 
 	g_return_val_if_fail (GS_IS_PLUGIN_LOADER (plugin_loader), NULL);
@@ -99,13 +99,13 @@ gs_plugin_loader_dedupe (GsPluginLoader *plugin_loader, GsApp *app)
 	g_mutex_lock (&plugin_loader->priv->app_cache_mutex);
 
 	/* not yet set */
-	if (gs_app_get_id (app) == NULL) {
+	if (as_app_get_id (app) == NULL) {
 		new_app = app;
 		goto out;
 	}
 
 	/* already exists */
-	new_app = g_hash_table_lookup (priv->app_cache, gs_app_get_id (app));
+	new_app = g_hash_table_lookup (priv->app_cache, as_app_get_id (app));
 	if (new_app == app) {
 		new_app = app;
 		goto out;
@@ -115,7 +115,7 @@ gs_plugin_loader_dedupe (GsPluginLoader *plugin_loader, GsApp *app)
 	if (new_app == NULL) {
 		new_app = app;
 		g_hash_table_insert (priv->app_cache,
-				     g_strdup (gs_app_get_id (app)),
+				     g_strdup (as_app_get_id (app)),
 				     g_object_ref (app));
 		goto out;
 	}
@@ -142,7 +142,7 @@ gs_plugin_loader_list_dedupe (GsPluginLoader *plugin_loader, GList *list)
 {
 	GList *l;
 	for (l = list; l != NULL; l = l->next)
-		l->data = gs_plugin_loader_dedupe (plugin_loader, GS_APP (l->data));
+		l->data = gs_plugin_loader_dedupe (plugin_loader, AS_APP (l->data));
 }
 
 /**
@@ -229,7 +229,7 @@ gs_plugin_loader_run_refine (GsPluginLoader *plugin_loader,
 	GList *related_list = NULL;
 	GPtrArray *addons;
 	GPtrArray *related;
-	GsApp *app;
+	AsApp *app;
 	GsPlugin *plugin;
 	gboolean ret = TRUE;
 	guint i;
@@ -260,13 +260,13 @@ gs_plugin_loader_run_refine (GsPluginLoader *plugin_loader,
 	if ((flags & GS_PLUGIN_REFINE_FLAGS_REQUIRE_ADDONS) > 0) {
 		flags &= ~GS_PLUGIN_REFINE_FLAGS_REQUIRE_ADDONS;
 		for (l = *list; l != NULL; l = l->next) {
-			app = GS_APP (l->data);
+			app = AS_APP (l->data);
 			addons = gs_app_get_addons (app);
 			for (i = 0; i < addons->len; i++) {
-				GsApp *addon = g_ptr_array_index (addons, i);
+				AsApp *addon = g_ptr_array_index (addons, i);
 				g_debug ("refining app %s addon %s",
-					 gs_app_get_id (app),
-					 gs_app_get_id (addon));
+					 as_app_get_id (app),
+					 as_app_get_id (addon));
 				gs_plugin_add_app (&addons_list, addon);
 			}
 		}
@@ -286,12 +286,12 @@ gs_plugin_loader_run_refine (GsPluginLoader *plugin_loader,
 	if ((flags & GS_PLUGIN_REFINE_FLAGS_REQUIRE_RELATED) > 0) {
 		flags &= ~GS_PLUGIN_REFINE_FLAGS_REQUIRE_RELATED;
 		for (l = *list; l != NULL; l = l->next) {
-			app = GS_APP (l->data);
+			app = AS_APP (l->data);
 			related = gs_app_get_related (app);
 			for (i = 0; i < related->len; i++) {
 				app = g_ptr_array_index (related, i);
 				g_debug ("refining related: %s[%s]",
-					 gs_app_get_id (app),
+					 as_app_get_id (app),
 					 gs_app_get_source_default (app));
 				gs_plugin_add_app (&related_list, app);
 			}
@@ -445,12 +445,12 @@ out:
  * gs_plugin_loader_get_app_str:
  **/
 static const gchar *
-gs_plugin_loader_get_app_str (GsApp *app)
+gs_plugin_loader_get_app_str (AsApp *app)
 {
 	const gchar *id;
 
 	/* first try the actual id */
-	id = gs_app_get_id_full (app);
+	id = as_app_get_id_full (app);
 	if (id != NULL)
 		return id;
 
@@ -472,10 +472,10 @@ gs_plugin_loader_get_app_str (GsApp *app)
  * gs_plugin_loader_app_is_valid:
  **/
 static gboolean
-gs_plugin_loader_app_is_valid (GsApp *app, gpointer user_data)
+gs_plugin_loader_app_is_valid (AsApp *app, gpointer user_data)
 {
 	/* don't show unknown state */
-	if (gs_app_get_state (app) == AS_APP_STATE_UNKNOWN) {
+	if (as_app_get_state (app) == AS_APP_STATE_UNKNOWN) {
 		g_debug ("app invalid as state unknown %s",
 			 gs_plugin_loader_get_app_str (app));
 		return FALSE;
@@ -483,7 +483,7 @@ gs_plugin_loader_app_is_valid (GsApp *app, gpointer user_data)
 
 	/* don't show unconverted unavailables */
 	if (gs_app_get_kind (app) == GS_APP_KIND_UNKNOWN &&
-		gs_app_get_state (app) == AS_APP_STATE_UNAVAILABLE) {
+		as_app_get_state (app) == AS_APP_STATE_UNAVAILABLE) {
 		g_debug ("app invalid as unconverted unavailable %s",
 			 gs_plugin_loader_get_app_str (app));
 		return FALSE;
@@ -511,12 +511,12 @@ gs_plugin_loader_app_is_valid (GsApp *app, gpointer user_data)
 	}
 
 	/* don't show apps that do not have the required details */
-	if (gs_app_get_name (app) == NULL) {
+	if (as_app_get_name (app, NULL) == NULL) {
 		g_debug ("app invalid as no name %s",
 			 gs_plugin_loader_get_app_str (app));
 		return FALSE;
 	}
-	if (gs_app_get_summary (app) == NULL) {
+	if (as_app_get_comment (app, NULL) == NULL) {
 		g_debug ("app invalid as no summary %s",
 			 gs_plugin_loader_get_app_str (app));
 		return FALSE;
@@ -534,7 +534,7 @@ gs_plugin_loader_app_is_valid (GsApp *app, gpointer user_data)
  * gs_plugin_loader_app_is_non_system:
  **/
 static gboolean
-gs_plugin_loader_app_is_non_system (GsApp *app, gpointer user_data)
+gs_plugin_loader_app_is_non_system (AsApp *app, gpointer user_data)
 {
 	return gs_app_get_kind (app) != GS_APP_KIND_SYSTEM;
 }
@@ -543,7 +543,7 @@ gs_plugin_loader_app_is_non_system (GsApp *app, gpointer user_data)
  * gs_plugin_loader_get_app_is_compatible:
  */
 static gboolean
-gs_plugin_loader_get_app_is_compatible (GsApp *app, gpointer user_data)
+gs_plugin_loader_get_app_is_compatible (AsApp *app, gpointer user_data)
 {
 	GsPluginLoader *plugin_loader = GS_PLUGIN_LOADER (user_data);
 	GsPluginLoaderPrivate *priv = plugin_loader->priv;
@@ -551,7 +551,7 @@ gs_plugin_loader_get_app_is_compatible (GsApp *app, gpointer user_data)
 	guint i;
 
 	/* search for any compatible projects */
-	tmp = gs_app_get_project_group (app);
+	tmp = as_app_get_project_group (app);
 	if (tmp == NULL)
 		return TRUE;
 	for (i = 0; priv->compatible_projects[i] != NULL; i++) {
@@ -559,7 +559,7 @@ gs_plugin_loader_get_app_is_compatible (GsApp *app, gpointer user_data)
 			return TRUE;
 	}
 	g_debug ("removing incompatible %s from project group %s",
-		 gs_app_get_id (app), gs_app_get_project_group (app));
+		 as_app_get_id (app), as_app_get_project_group (app));
 	return FALSE;
 }
 
@@ -567,11 +567,11 @@ gs_plugin_loader_get_app_is_compatible (GsApp *app, gpointer user_data)
  * gs_plugin_loader_get_app_has_appdata:
  */
 static gboolean
-gs_plugin_loader_get_app_has_appdata (GsApp *app, gpointer user_data)
+gs_plugin_loader_get_app_has_appdata (AsApp *app, gpointer user_data)
 {
-	if (gs_app_get_description (app) != NULL)
+	if (as_app_get_description (app, NULL) != NULL)
 		return TRUE;
-	g_debug ("removing app with no AppData %s", gs_app_get_id (app));
+	g_debug ("removing app with no AppData %s", as_app_get_id (app));
 	return FALSE;
 }
 
@@ -581,7 +581,7 @@ gs_plugin_loader_get_app_has_appdata (GsApp *app, gpointer user_data)
 static gboolean
 gs_plugin_loader_run_action_plugin (GsPluginLoader *plugin_loader,
 				    GsPlugin *plugin,
-				    GsApp *app,
+				    AsApp *app,
 				    const gchar *function_name,
 				    GCancellable *cancellable,
 				    GError **error)
@@ -629,7 +629,7 @@ out:
  **/
 static gboolean
 gs_plugin_loader_run_action (GsPluginLoader *plugin_loader,
-			     GsApp *app,
+			     AsApp *app,
 			     const gchar *function_name,
 			     GCancellable *cancellable,
 			     GError **error)
@@ -685,7 +685,7 @@ typedef struct {
 	gchar				*filename;
 	guint				 cache_age;
 	GsCategory			*category;
-	GsApp				*app;
+	AsApp				*app;
 	AsAppState			 state_success;
 	AsAppState			 state_failure;
 } GsPluginLoaderAsyncState;
@@ -719,12 +719,12 @@ gs_plugin_loader_add_os_update_item (GList *list)
 	GdkPixbuf *pixbuf = NULL;
 	GList *l;
 	GList *list_new = list;
-	GsApp *app_os;
-	GsApp *app_tmp;
+	AsApp *app_os;
+	AsApp *app_tmp;
 
 	/* do we have any packages left that are not apps? */
 	for (l = list; l != NULL; l = l->next) {
-		app_tmp = GS_APP (l->data);
+		app_tmp = AS_APP (l->data);
 		if (gs_app_get_kind (app_tmp) == GS_APP_KIND_PACKAGE)
 			has_os_update = TRUE;
 	}
@@ -748,9 +748,9 @@ gs_plugin_loader_add_os_update_item (GList *list)
 			      "improvements for all users."));
 	gs_app_set_description (app_os,
 				GS_APP_QUALITY_NORMAL,
-				gs_app_get_summary (app_os));
+				as_app_get_comment (app_os, NULL));
 	for (l = list; l != NULL; l = l->next) {
-		app_tmp = GS_APP (l->data);
+		app_tmp = AS_APP (l->data);
 		if (gs_app_get_kind (app_tmp) != GS_APP_KIND_PACKAGE)
 			continue;
 		gs_app_add_related (app_os, app_tmp);
@@ -835,19 +835,19 @@ out:
  * gs_plugin_loader_get_updates_async:
  *
  * This method calls all plugins that implement the gs_plugin_add_updates()
- * function. The plugins can either return #GsApp objects of kind
- * %GS_APP_KIND_NORMAL for bonafide applications, or #GsApp's of kind
+ * function. The plugins can either return #AsApp objects of kind
+ * %GS_APP_KIND_NORMAL for bonafide applications, or #AsApp's of kind
  * %GS_APP_KIND_PACKAGE for packages that may or may not be applications.
  *
- * Once the list of updates is refined, some of the #GsApp's of kind
+ * Once the list of updates is refined, some of the #AsApp's of kind
  * %GS_APP_KIND_PACKAGE will have been promoted to a kind of %GS_APP_KIND_NORMAL,
  * or if they are core applications, promoted again to a kind of %GS_APP_KIND_SYSTEM.
  *
- * Any #GsApp's of kind %GS_APP_KIND_PACKAGE that remain after refining are
- * added to a new virtual #GsApp of kind %GS_APP_KIND_OS_UPDATE and all the
+ * Any #AsApp's of kind %GS_APP_KIND_PACKAGE that remain after refining are
+ * added to a new virtual #AsApp of kind %GS_APP_KIND_OS_UPDATE and all the
  * %GS_APP_KIND_PACKAGE objects are moved to related packages of this object.
  *
- * This means all of the #GsApp's returning from this function are of kind
+ * This means all of the #AsApp's returning from this function are of kind
  * %GS_APP_KIND_NORMAL, %GS_APP_KIND_SYSTEM or %GS_APP_KIND_OS_UPDATE.
  *
  * The #GsApps may be in state %AS_APP_STATE_INSTALLED or %AS_APP_STATE_AVAILABLE
@@ -880,7 +880,7 @@ gs_plugin_loader_get_updates_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_get_updates_finish:
  *
- * Return value: (element-type GsApp) (transfer full): A list of applications
+ * Return value: (element-type AsApp) (transfer full): A list of applications
  **/
 GList *
 gs_plugin_loader_get_updates_finish (GsPluginLoader *plugin_loader,
@@ -945,7 +945,7 @@ out:
  * gs_plugin_loader_get_sources_async:
  *
  * This method calls all plugins that implement the gs_plugin_add_sources()
- * function. The plugins return #GsApp objects of kind %GS_APP_KIND_SOURCE..
+ * function. The plugins return #AsApp objects of kind %GS_APP_KIND_SOURCE..
  *
  * The *applications* installed from each source can be obtained using
  * gs_app_get_related() if this information is available.
@@ -977,7 +977,7 @@ gs_plugin_loader_get_sources_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_get_sources_finish:
  *
- * Return value: (element-type GsApp) (transfer full): A list of applications
+ * Return value: (element-type AsApp) (transfer full): A list of applications
  **/
 GList *
 gs_plugin_loader_get_sources_finish (GsPluginLoader *plugin_loader,
@@ -1040,18 +1040,18 @@ out:
  * gs_plugin_loader_get_installed_async:
  *
  * This method calls all plugins that implement the gs_plugin_add_installed()
- * function. The plugins can either return #GsApp objects of kind
- * %GS_APP_KIND_NORMAL for bonafide applications, or #GsApp's of kind
+ * function. The plugins can either return #AsApp objects of kind
+ * %GS_APP_KIND_NORMAL for bonafide applications, or #AsApp's of kind
  * %GS_APP_KIND_PACKAGE for packages that may or may not be applications.
  *
- * Once the list of updates is refined, some of the #GsApp's of kind
+ * Once the list of updates is refined, some of the #AsApp's of kind
  * %GS_APP_KIND_PACKAGE will have been promoted to a kind of %GS_APP_KIND_NORMAL,
  * or if they are core applications, promoted again to a kind of %GS_APP_KIND_SYSTEM.
  *
- * Any #GsApp's of kind %GS_APP_KIND_PACKAGE or %GS_APP_KIND_SYSTEM that remain
+ * Any #AsApp's of kind %GS_APP_KIND_PACKAGE or %GS_APP_KIND_SYSTEM that remain
  * after refining are automatically removed.
  *
- * This means all of the #GsApp's returning from this function are of kind
+ * This means all of the #AsApp's returning from this function are of kind
  * %GS_APP_KIND_NORMAL.
  *
  * The #GsApps will all initially be in state %AS_APP_STATE_INSTALLED.
@@ -1083,7 +1083,7 @@ gs_plugin_loader_get_installed_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_get_installed_finish:
  *
- * Return value: (element-type GsApp) (transfer full): A list of applications
+ * Return value: (element-type AsApp) (transfer full): A list of applications
  **/
 GList *
 gs_plugin_loader_get_installed_finish (GsPluginLoader *plugin_loader,
@@ -1173,7 +1173,7 @@ gs_plugin_loader_get_popular_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_get_popular_finish:
  *
- * Return value: (element-type GsApp) (transfer full): A list of applications
+ * Return value: (element-type AsApp) (transfer full): A list of applications
  **/
 GList *
 gs_plugin_loader_get_popular_finish (GsPluginLoader *plugin_loader,
@@ -1194,9 +1194,9 @@ gs_plugin_loader_get_popular_finish (GsPluginLoader *plugin_loader,
  * gs_plugin_loader_featured_debug:
  **/
 static gboolean
-gs_plugin_loader_featured_debug (GsApp *app, gpointer user_data)
+gs_plugin_loader_featured_debug (AsApp *app, gpointer user_data)
 {
-	if (g_strcmp0 (gs_app_get_id_full (app),
+	if (g_strcmp0 (as_app_get_id_full (app),
 	    g_getenv ("GNOME_SOFTWARE_FEATURED")) == 0)
 		return TRUE;
 	return FALSE;
@@ -1251,18 +1251,18 @@ out:
  * gs_plugin_loader_get_featured_async:
  *
  * This method calls all plugins that implement the gs_plugin_add_featured()
- * function. The plugins can either return #GsApp objects of kind
- * %GS_APP_KIND_NORMAL for bonafide applications, or #GsApp's of kind
+ * function. The plugins can either return #AsApp objects of kind
+ * %GS_APP_KIND_NORMAL for bonafide applications, or #AsApp's of kind
  * %GS_APP_KIND_PACKAGE for packages that may or may not be applications.
  *
- * Once the list of updates is refined, some of the #GsApp's of kind
+ * Once the list of updates is refined, some of the #AsApp's of kind
  * %GS_APP_KIND_PACKAGE will have been promoted to a kind of %GS_APP_KIND_NORMAL,
  * or if they are core applications, promoted again to a kind of %GS_APP_KIND_SYSTEM.
  *
- * Any #GsApp's of kind %GS_APP_KIND_PACKAGE that remain after refining are
+ * Any #AsApp's of kind %GS_APP_KIND_PACKAGE that remain after refining are
  * automatically removed.
  *
- * This means all of the #GsApp's returning from this function are of kind
+ * This means all of the #AsApp's returning from this function are of kind
  * %GS_APP_KIND_NORMAL or %GS_APP_KIND_SYSTEM.
  *
  * The #GsApps may be in state %AS_APP_STATE_INSTALLED or %AS_APP_STATE_AVAILABLE
@@ -1295,7 +1295,7 @@ gs_plugin_loader_get_featured_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_get_featured_finish:
  *
- * Return value: (element-type GsApp) (transfer full): A list of applications
+ * Return value: (element-type AsApp) (transfer full): A list of applications
  **/
 GList *
 gs_plugin_loader_get_featured_finish (GsPluginLoader *plugin_loader,
@@ -1316,7 +1316,7 @@ gs_plugin_loader_get_featured_finish (GsPluginLoader *plugin_loader,
  * gs_plugin_loader_convert_unavailable_app:
  **/
 static gboolean
-gs_plugin_loader_convert_unavailable_app (GsApp *app, const gchar *search)
+gs_plugin_loader_convert_unavailable_app (AsApp *app, const gchar *search)
 {
 	GPtrArray *keywords;
 	GString *tmp;
@@ -1324,7 +1324,7 @@ gs_plugin_loader_convert_unavailable_app (GsApp *app, const gchar *search)
 	guint i;
 
 	/* is the search string one of the codec keywords */
-	keywords = gs_app_get_keywords (app);
+	keywords = as_app_get_keywords (app);
 	for (i = 0; i < keywords->len; i++) {
 		keyword = g_ptr_array_index (keywords, i);
 		if (g_ascii_strcasecmp (search, keyword) == 0) {
@@ -1345,7 +1345,7 @@ gs_plugin_loader_convert_unavailable_app (GsApp *app, const gchar *search)
 	gs_app_set_summary_missing (app, tmp->str);
 	gs_app_set_kind (app, GS_APP_KIND_MISSING);
 	gs_app_set_size (app, GS_APP_SIZE_MISSING);
-	gs_app_set_icon (app, "dialog-question-symbolic");
+	as_app_set_icon (app, "dialog-question-symbolic", -1);
 	gs_app_load_icon (app, NULL);
 	g_string_free (tmp, TRUE);
 	return TRUE;
@@ -1358,19 +1358,19 @@ static void
 gs_plugin_loader_convert_unavailable (GList *list, const gchar *search)
 {
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret;
 
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		if (gs_app_get_kind (app) != GS_APP_KIND_UNKNOWN &&
 		    gs_app_get_kind (app) != GS_APP_KIND_MISSING)
 			continue;
-		if (gs_app_get_state (app) != AS_APP_STATE_UNAVAILABLE)
+		if (as_app_get_state (app) != AS_APP_STATE_UNAVAILABLE)
 			continue;
-		if (gs_app_get_id_kind (app) != AS_ID_KIND_CODEC)
+		if (as_app_get_id_kind (app) != AS_ID_KIND_CODEC)
 			continue;
-		if (gs_app_get_url (app, GS_APP_URL_KIND_MISSING) == NULL)
+		if (as_app_get_url_item (app, AS_URL_KIND_MISSING) == NULL)
 			continue;
 
 		/* only convert the first unavailable codec */
@@ -1472,18 +1472,18 @@ out:
  * gs_plugin_loader_search_async:
  *
  * This method calls all plugins that implement the gs_plugin_add_search()
- * function. The plugins can either return #GsApp objects of kind
- * %GS_APP_KIND_NORMAL for bonafide applications, or #GsApp's of kind
+ * function. The plugins can either return #AsApp objects of kind
+ * %GS_APP_KIND_NORMAL for bonafide applications, or #AsApp's of kind
  * %GS_APP_KIND_PACKAGE for packages that may or may not be applications.
  *
- * Once the list of updates is refined, some of the #GsApp's of kind
+ * Once the list of updates is refined, some of the #AsApp's of kind
  * %GS_APP_KIND_PACKAGE will have been promoted to a kind of %GS_APP_KIND_NORMAL,
  * or if they are core applications, promoted again to a kind of %GS_APP_KIND_SYSTEM.
  *
- * Any #GsApp's of kind %GS_APP_KIND_PACKAGE or %GS_APP_KIND_SYSTEM that remain
+ * Any #AsApp's of kind %GS_APP_KIND_PACKAGE or %GS_APP_KIND_SYSTEM that remain
  * after refining are automatically removed.
  *
- * This means all of the #GsApp's returning from this function are of kind
+ * This means all of the #AsApp's returning from this function are of kind
  * %GS_APP_KIND_NORMAL.
  *
  * The #GsApps may be in state %AS_APP_STATE_INSTALLED or %AS_APP_STATE_AVAILABLE
@@ -1518,7 +1518,7 @@ gs_plugin_loader_search_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_search_finish:
  *
- * Return value: (element-type GsApp) (transfer full): A list of applications
+ * Return value: (element-type AsApp) (transfer full): A list of applications
  **/
 GList *
 gs_plugin_loader_search_finish (GsPluginLoader *plugin_loader,
@@ -1747,18 +1747,18 @@ out:
  * gs_plugin_loader_get_category_apps_async:
  *
  * This method calls all plugins that implement the gs_plugin_add_category_apps()
- * function. The plugins can either return #GsApp objects of kind
- * %GS_APP_KIND_NORMAL for bonafide applications, or #GsApp's of kind
+ * function. The plugins can either return #AsApp objects of kind
+ * %GS_APP_KIND_NORMAL for bonafide applications, or #AsApp's of kind
  * %GS_APP_KIND_PACKAGE for packages that may or may not be applications.
  *
- * Once the list of updates is refined, some of the #GsApp's of kind
+ * Once the list of updates is refined, some of the #AsApp's of kind
  * %GS_APP_KIND_PACKAGE will have been promoted to a kind of %GS_APP_KIND_NORMAL,
  * or if they are core applications, promoted again to a kind of %GS_APP_KIND_SYSTEM.
  *
- * Any #GsApp's of kind %GS_APP_KIND_PACKAGE or %GS_APP_KIND_SYSTEM that remain
+ * Any #AsApp's of kind %GS_APP_KIND_PACKAGE or %GS_APP_KIND_SYSTEM that remain
  * after refining are automatically removed.
  *
- * This means all of the #GsApp's returning from this function are of kind
+ * This means all of the #AsApp's returning from this function are of kind
  * %GS_APP_KIND_NORMAL.
  *
  * The #GsApps may be in state %AS_APP_STATE_INSTALLED or %AS_APP_STATE_AVAILABLE
@@ -1793,7 +1793,7 @@ gs_plugin_loader_get_category_apps_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_get_category_apps_finish:
  *
- * Return value: (element-type GsApp) (transfer full): A list of applications
+ * Return value: (element-type AsApp) (transfer full): A list of applications
  **/
 GList *
 gs_plugin_loader_get_category_apps_finish (GsPluginLoader *plugin_loader,
@@ -1851,7 +1851,7 @@ out:
  **/
 void
 gs_plugin_loader_app_refine_async (GsPluginLoader *plugin_loader,
-			           GsApp *app,
+			           AsApp *app,
 			           GsPluginRefineFlags flags,
 			           GCancellable *cancellable,
 			           GAsyncReadyCallback callback,
@@ -1940,7 +1940,7 @@ gs_plugin_loader_app_action_thread_cb (GTask *task,
 			gs_app_set_state (state->app, state->state_success);
 			addons = gs_app_get_addons (state->app);
 			for (i = 0; i < addons->len; i++) {
-				GsApp *addon = g_ptr_array_index (addons, i);
+				AsApp *addon = g_ptr_array_index (addons, i);
 				if (gs_app_get_to_be_installed (addon)) {
 					gs_app_set_state (addon, state->state_success);
 					gs_app_set_to_be_installed (addon, FALSE);
@@ -1952,7 +1952,7 @@ gs_plugin_loader_app_action_thread_cb (GTask *task,
 		gs_app_set_state (state->app, state->state_failure);
 		addons = gs_app_get_addons (state->app);
 		for (i = 0; i < addons->len; i++) {
-			GsApp *addon = g_ptr_array_index (addons, i);
+			AsApp *addon = g_ptr_array_index (addons, i);
 			if (gs_app_get_to_be_installed (addon)) {
 				gs_app_set_state (addon, state->state_failure);
 				gs_app_set_to_be_installed (addon, FALSE);
@@ -1973,7 +1973,7 @@ static gboolean
 load_install_queue (GsPluginLoader *plugin_loader, GError **error)
 {
 	GList *list = NULL;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret = TRUE;
 	gchar **names = NULL;
 	gchar *contents = NULL;
@@ -2002,7 +2002,7 @@ load_install_queue (GsPluginLoader *plugin_loader, GError **error)
 
 		g_mutex_lock (&plugin_loader->priv->app_cache_mutex);
 		g_hash_table_insert (plugin_loader->priv->app_cache,
-				     g_strdup (gs_app_get_id (app)),
+				     g_strdup (as_app_get_id (app)),
 				     g_object_ref (app));
 		g_mutex_unlock (&plugin_loader->priv->app_cache_mutex);
 
@@ -2011,7 +2011,7 @@ load_install_queue (GsPluginLoader *plugin_loader, GError **error)
 				 g_object_ref (app));
 		g_mutex_unlock (&plugin_loader->priv->pending_apps_mutex);
 
-		g_debug ("adding pending app %s", gs_app_get_id (app));
+		g_debug ("adding pending app %s", as_app_get_id (app));
 		gs_plugin_add_app (&list, app);
 		g_object_unref (app);
 	}
@@ -2049,10 +2049,10 @@ save_install_queue (GsPluginLoader *plugin_loader)
 	pending_apps = plugin_loader->priv->pending_apps;
 	g_mutex_lock (&plugin_loader->priv->pending_apps_mutex);
 	for (i = pending_apps->len - 1; i >= 0; i--) {
-		GsApp *app;
+		AsApp *app;
 		app = g_ptr_array_index (pending_apps, i);
-		if (gs_app_get_state (app) == AS_APP_STATE_QUEUED_FOR_INSTALL) {
-			g_string_append (s, gs_app_get_id (app));
+		if (as_app_get_state (app) == AS_APP_STATE_QUEUED_FOR_INSTALL) {
+			g_string_append (s, as_app_get_id (app));
 			g_string_append_c (s, '\n');
 		}
 	}
@@ -2075,7 +2075,7 @@ save_install_queue (GsPluginLoader *plugin_loader)
 }
 
 static void
-add_app_to_install_queue (GsPluginLoader *plugin_loader, GsApp *app)
+add_app_to_install_queue (GsPluginLoader *plugin_loader, AsApp *app)
 {
 	GPtrArray *addons;
 	guint i;
@@ -2094,14 +2094,14 @@ add_app_to_install_queue (GsPluginLoader *plugin_loader, GsApp *app)
 	/* recursively queue any addons */
 	addons = gs_app_get_addons (app);
 	for (i = 0; i < addons->len; i++) {
-		GsApp *addon = g_ptr_array_index (addons, i);
+		AsApp *addon = g_ptr_array_index (addons, i);
 		if (gs_app_get_to_be_installed (addon))
 			add_app_to_install_queue (plugin_loader, addon);
 	}
 }
 
 static gboolean
-remove_app_from_install_queue (GsPluginLoader *plugin_loader, GsApp *app)
+remove_app_from_install_queue (GsPluginLoader *plugin_loader, AsApp *app)
 {
 	GPtrArray *addons;
 	gboolean ret;
@@ -2121,7 +2121,7 @@ remove_app_from_install_queue (GsPluginLoader *plugin_loader, GsApp *app)
 		/* recursively remove any queued addons */
 		addons = gs_app_get_addons (app);
 		for (i = 0; i < addons->len; i++) {
-			GsApp *addon = g_ptr_array_index (addons, i);
+			AsApp *addon = g_ptr_array_index (addons, i);
 			remove_app_from_install_queue (plugin_loader, addon);
 		}
 	}
@@ -2137,7 +2137,7 @@ remove_app_from_install_queue (GsPluginLoader *plugin_loader, GsApp *app)
  **/
 void
 gs_plugin_loader_app_action_async (GsPluginLoader *plugin_loader,
-				   GsApp *app,
+				   AsApp *app,
 				   GsPluginLoaderAction action,
 				   GCancellable *cancellable,
 				   GAsyncReadyCallback callback,
@@ -2225,18 +2225,18 @@ gs_plugin_loader_app_action_finish (GsPluginLoader *plugin_loader,
  * gs_plugin_loader_get_state_for_app:
  **/
 AsAppState
-gs_plugin_loader_get_state_for_app (GsPluginLoader *plugin_loader, GsApp *app)
+gs_plugin_loader_get_state_for_app (GsPluginLoader *plugin_loader, AsApp *app)
 {
 	AsAppState state = AS_APP_STATE_UNKNOWN;
-	GsApp *tmp;
+	AsApp *tmp;
 	GsPluginLoaderPrivate *priv = plugin_loader->priv;
 	guint i;
 
 	g_mutex_lock (&plugin_loader->priv->pending_apps_mutex);
 	for (i = 0; i < priv->pending_apps->len; i++) {
 		tmp = g_ptr_array_index (priv->pending_apps, i);
-		if (g_strcmp0 (gs_app_get_id (tmp), gs_app_get_id (app)) == 0) {
-			state = gs_app_get_state (tmp);
+		if (g_strcmp0 (as_app_get_id (tmp), as_app_get_id (app)) == 0) {
+			state = as_app_get_state (tmp);
 			break;
 		}
 	}
@@ -2311,7 +2311,7 @@ gs_plugin_loader_set_enabled (GsPluginLoader *plugin_loader,
  */
 static void
 gs_plugin_loader_status_update_cb (GsPlugin *plugin,
-				   GsApp *app,
+				   AsApp *app,
 				   GsPluginStatus status,
 				   gpointer user_data)
 {
@@ -2324,7 +2324,7 @@ gs_plugin_loader_status_update_cb (GsPlugin *plugin,
 	/* new, or an app, so emit */
 	g_debug ("emitting %s(%s)",
 		 gs_plugin_status_to_string (status),
-		 app != NULL ? gs_app_get_id (app) : "<general>");
+		 app != NULL ? as_app_get_id (app) : "<general>");
 	plugin_loader->priv->status_last = status;
 	g_signal_emit (plugin_loader,
 		       signals[SIGNAL_STATUS_CHANGED],
@@ -2723,7 +2723,7 @@ gs_plugin_loader_app_installed_cb (GObject *source,
 				   gpointer user_data)
 {
 	GError *error = NULL;
-	GsApp *app = GS_APP (user_data);
+	AsApp *app = AS_APP (user_data);
 	GsPluginLoader *plugin_loader = GS_PLUGIN_LOADER (source);
 	gboolean ret;
 
@@ -2733,7 +2733,7 @@ gs_plugin_loader_app_installed_cb (GObject *source,
 	if (!ret) {
 		remove_app_from_install_queue (plugin_loader, app);
 		g_warning ("failed to install %s: %s",
-			   gs_app_get_id (app),
+			   as_app_get_id (app),
 			   error->message);
 		g_error_free (error);
 	}
@@ -2749,7 +2749,7 @@ gs_plugin_loader_set_network_status (GsPluginLoader *plugin_loader,
 {
 	GList *l;
 	GList *queue = NULL;
-	GsApp *app;
+	AsApp *app;
 	guint i;
 
 	if (plugin_loader->priv->online == online)
@@ -2763,7 +2763,7 @@ gs_plugin_loader_set_network_status (GsPluginLoader *plugin_loader,
 	g_mutex_lock (&plugin_loader->priv->pending_apps_mutex);
 	for (i = 0; i < plugin_loader->priv->pending_apps->len; i++) {
 		app = g_ptr_array_index (plugin_loader->priv->pending_apps, i);
-		if (gs_app_get_state (app) == AS_APP_STATE_QUEUED_FOR_INSTALL)
+		if (as_app_get_state (app) == AS_APP_STATE_QUEUED_FOR_INSTALL)
 			gs_plugin_add_app (&queue, app);
 	}
 	g_mutex_unlock (&plugin_loader->priv->pending_apps_mutex);
@@ -3050,11 +3050,11 @@ out:
  * gs_plugin_loader_filename_to_app_async:
  *
  * This method calls all plugins that implement the gs_plugin_add_filename_to_app()
- * function. The plugins can either return #GsApp objects of kind
- * %GS_APP_KIND_NORMAL for bonafide applications, or #GsApp's of kind
+ * function. The plugins can either return #AsApp objects of kind
+ * %GS_APP_KIND_NORMAL for bonafide applications, or #AsApp's of kind
  * %GS_APP_KIND_PACKAGE for packages that may or may not be applications.
  *
- * Once the list of updates is refined, some of the #GsApp's of kind
+ * Once the list of updates is refined, some of the #AsApp's of kind
  * %GS_APP_KIND_PACKAGE will have been promoted to a kind of %GS_APP_KIND_NORMAL,
  * or if they are core applications.
  **/
@@ -3087,9 +3087,9 @@ gs_plugin_loader_filename_to_app_async (GsPluginLoader *plugin_loader,
 /**
  * gs_plugin_loader_filename_to_app_finish:
  *
- * Return value: (element-type GsApp) (transfer full): An application, or %NULL
+ * Return value: (element-type AsApp) (transfer full): An application, or %NULL
  **/
-GsApp *
+AsApp *
 gs_plugin_loader_filename_to_app_finish (GsPluginLoader *plugin_loader,
 					 GAsyncResult *res,
 					 GError **error)

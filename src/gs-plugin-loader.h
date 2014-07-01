@@ -50,7 +50,7 @@ typedef struct
 {
 	GObjectClass		 parent_class;
 	void			(*status_changed)	(GsPluginLoader	*plugin_loader,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GsPluginStatus	 status);
 	void			(*pending_apps_changed)	(GsPluginLoader	*plugin_loader);
 	void			(*updates_changed)	(GsPluginLoader	*plugin_loader);
@@ -71,7 +71,7 @@ typedef enum {
 } GsPluginLoaderAction;
 
 typedef void	 (*GsPluginLoaderFinishedFunc)		(GsPluginLoader	*plugin_loader,
-							 GsApp		*app,
+							 AsApp		*app,
 							 gpointer	 user_data);
 
 GQuark		 gs_plugin_loader_error_quark		(void);
@@ -150,7 +150,7 @@ void		 gs_plugin_loader_filename_to_app_async	(GsPluginLoader	*plugin_loader,
 							 GCancellable	*cancellable,
 							 GAsyncReadyCallback callback,
 							 gpointer	 user_data);
-GsApp		*gs_plugin_loader_filename_to_app_finish(GsPluginLoader	*plugin_loader,
+AsApp		*gs_plugin_loader_filename_to_app_finish(GsPluginLoader	*plugin_loader,
 							 GAsyncResult	*res,
 							 GError		**error);
 gboolean	 gs_plugin_loader_setup			(GsPluginLoader	*plugin_loader,
@@ -162,7 +162,7 @@ gboolean	 gs_plugin_loader_set_enabled		(GsPluginLoader	*plugin_loader,
 void		 gs_plugin_loader_set_location		(GsPluginLoader	*plugin_loader,
 							 const gchar	*location);
 void		 gs_plugin_loader_app_refine_async	(GsPluginLoader	*plugin_loader,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GsPluginRefineFlags flags,
 							 GCancellable	*cancellable,
 							 GAsyncReadyCallback callback,
@@ -171,7 +171,7 @@ gboolean	 gs_plugin_loader_app_refine_finish	(GsPluginLoader	*plugin_loader,
 							 GAsyncResult	*res,
 							 GError		**error);
 void		 gs_plugin_loader_app_action_async	(GsPluginLoader	*plugin_loader,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GsPluginLoaderAction a,
 							 GCancellable	*cancellable,
 							 GAsyncReadyCallback callback,
@@ -189,10 +189,10 @@ void		 gs_plugin_loader_refresh_async		(GsPluginLoader	*plugin_loader,
 							 GAsyncReadyCallback callback,
 							 gpointer	 user_data);
 AsAppState	 gs_plugin_loader_get_state_for_app	(GsPluginLoader	*plugin_loader,
-							 GsApp		*app);
+							 AsApp		*app);
 GPtrArray	*gs_plugin_loader_get_pending		(GsPluginLoader	*plugin_loader);
-GsApp		*gs_plugin_loader_dedupe		(GsPluginLoader	*plugin_loader,
-							 GsApp		*app);
+AsApp		*gs_plugin_loader_dedupe		(GsPluginLoader	*plugin_loader,
+							 AsApp		*app);
 void		 gs_plugin_loader_set_network_status    (GsPluginLoader *plugin_loader,
 							 gboolean        online);
 

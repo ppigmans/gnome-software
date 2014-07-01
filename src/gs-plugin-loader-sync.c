@@ -26,14 +26,14 @@
 /**
  * gs_plugin_loader_get_app_by_id:
  */
-GsApp *
+AsApp *
 gs_plugin_loader_get_app_by_id (GsPluginLoader *plugin_loader,
 				const gchar *id,
 				GsPluginRefineFlags flags,
 				GCancellable *cancellable,
 				GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 	gboolean ret;
 
 	app = gs_app_new (id);
@@ -52,7 +52,7 @@ typedef struct {
 	GMainContext    *context;
 	GMainLoop	*loop;
 	gboolean	 ret;
-	GsApp		*app;
+	AsApp		*app;
 } GsPluginLoaderHelper;
 
 static void
@@ -438,7 +438,7 @@ gs_plugin_loader_app_refine_finish_sync (GsPluginLoader *plugin_loader,
  **/
 gboolean
 gs_plugin_loader_app_refine (GsPluginLoader *plugin_loader,
-			     GsApp *app,
+			     AsApp *app,
 			     GsPluginRefineFlags flags,
 			     GCancellable *cancellable,
 			     GError **error)
@@ -488,7 +488,7 @@ gs_plugin_loader_app_action_finish_sync (GsPluginLoader *plugin_loader,
  **/
 gboolean
 gs_plugin_loader_app_action (GsPluginLoader *plugin_loader,
-			     GsApp *app,
+			     AsApp *app,
 			     GsPluginLoaderAction action,
 			     GCancellable *cancellable,
 			     GError **error)
@@ -585,7 +585,7 @@ gs_plugin_loader_filename_to_app_finish_sync (GObject *source_object,
 /**
  * gs_plugin_loader_filename_to_app:
  **/
-GsApp *
+AsApp *
 gs_plugin_loader_filename_to_app (GsPluginLoader *plugin_loader,
 				  const gchar *filename,
 				  GsPluginRefineFlags flags,

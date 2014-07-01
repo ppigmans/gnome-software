@@ -46,9 +46,9 @@ struct _GsSourcesDialogPrivate
 G_DEFINE_TYPE_WITH_PRIVATE (GsSourcesDialog, gs_sources_dialog, GTK_TYPE_DIALOG)
 
 static void
-add_source (GtkListBox *listbox, GsApp *app)
+add_source (GtkListBox *listbox, AsApp *app)
 {
-	GsApp *app_tmp;
+	AsApp *app_tmp;
 	GtkWidget *widget;
 	GtkWidget *box;
 	GtkStyleContext *context;
@@ -64,7 +64,7 @@ add_source (GtkListBox *listbox, GsApp *app)
 	gtk_widget_set_margin_bottom (box, 12);
 	gtk_widget_set_margin_end (box, 12);
 
-	widget = gtk_label_new (gs_app_get_name (app));
+	widget = gtk_label_new (as_app_get_name (app, NULL));
 	gtk_widget_set_halign (widget, GTK_ALIGN_START);
 	gtk_box_pack_start (GTK_BOX (box), widget, FALSE, FALSE, 0);
 	related = gs_app_get_related (app);
@@ -72,7 +72,7 @@ add_source (GtkListBox *listbox, GsApp *app)
 	/* split up the types */
 	for (i = 0; i < related->len; i++) {
 		app_tmp = g_ptr_array_index (related, i);
-		switch (gs_app_get_id_kind (app_tmp)) {
+		switch (as_app_get_id_kind (app_tmp)) {
 		case AS_ID_KIND_WEB_APP:
 		case AS_ID_KIND_DESKTOP:
 			cnt_apps++;
@@ -129,7 +129,7 @@ get_sources_cb (GsPluginLoader *plugin_loader,
 	GError *error = NULL;
 	GList *l;
 	GList *list;
-	GsApp *app;
+	AsApp *app;
 	GsSourcesDialogPrivate *priv = gs_sources_dialog_get_instance_private (dialog);
 
 	/* show results */
@@ -153,7 +153,7 @@ get_sources_cb (GsPluginLoader *plugin_loader,
 	/* add each */
 	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "sources");
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		add_source (GTK_LIST_BOX (priv->listbox), app);
 	}
 out:
@@ -200,7 +200,7 @@ list_sort_func (GtkListBoxRow *a,
 }
 
 static void
-add_app (GtkListBox *listbox, GsApp *app)
+add_app (GtkListBox *listbox, AsApp *app)
 {
 	GtkWidget *box;
 	GtkWidget *widget;
@@ -211,7 +211,7 @@ add_app (GtkListBox *listbox, GsApp *app)
 	gtk_widget_set_margin_bottom (box, 12);
 	gtk_widget_set_margin_end (box, 12);
 
-	widget = gtk_label_new (gs_app_get_name (app));
+	widget = gtk_label_new (as_app_get_name (app, NULL));
 	gtk_widget_set_halign (widget, GTK_ALIGN_START);
 	gtk_box_pack_start (GTK_BOX (box), widget, FALSE, FALSE, 0);
 
@@ -226,7 +226,7 @@ list_row_activated_cb (GtkListBox *list_box,
                        GsSourcesDialog *dialog)
 {
 	GPtrArray *related;
-	GsApp *app;
+	AsApp *app;
 	GsSourcesDialogPrivate *priv = gs_sources_dialog_get_instance_private (dialog);
 	guint cnt_apps = 0;
 	guint i;
@@ -236,7 +236,7 @@ list_row_activated_cb (GtkListBox *list_box,
 	gtk_widget_show (priv->button_back);
 
 	gs_container_remove_all (GTK_CONTAINER (priv->listbox_apps));
-	app = GS_APP (g_object_get_data (G_OBJECT (gtk_bin_get_child (GTK_BIN (row))), 
+	app = AS_APP (g_object_get_data (G_OBJECT (gtk_bin_get_child (GTK_BIN (row))), 
 					 "GsShell::app"));
 	related = gs_app_get_related (app);
 	for (i = 0; i < related->len; i++) {
@@ -303,7 +303,7 @@ app_removed_cb (GObject *source,
 static void
 remove_button_cb (GtkWidget *widget, GsSourcesDialog *dialog)
 {
-	GsApp *app;
+	AsApp *app;
 	GsSourcesDialogPrivate *priv = gs_sources_dialog_get_instance_private (dialog);
 
 	/* disable button */
@@ -315,7 +315,7 @@ remove_button_cb (GtkWidget *widget, GsSourcesDialog *dialog)
 	gtk_widget_set_sensitive (priv->listbox_apps, FALSE);
 
 	/* remove source */
-	app = GS_APP (g_object_get_data (G_OBJECT (priv->stack), "GsShell::app"));
+	app = AS_APP (g_object_get_data (G_OBJECT (priv->stack), "GsShell::app"));
 	gs_plugin_loader_app_action_async (priv->plugin_loader,
 					   app,
 					   GS_PLUGIN_LOADER_ACTION_REMOVE,

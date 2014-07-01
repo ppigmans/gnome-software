@@ -30,7 +30,7 @@
 
 struct _GsHistoryDialogPrivate
 {
-	GsApp		*app;
+	AsApp		*app;
 	GtkSizeGroup	*sizegroup_state;
 	GtkSizeGroup	*sizegroup_timestamp;
 	GtkSizeGroup	*sizegroup_version;
@@ -43,8 +43,8 @@ G_DEFINE_TYPE_WITH_PRIVATE (GsHistoryDialog, gs_history_dialog, GTK_TYPE_DIALOG)
 static gint
 history_sort_cb (gconstpointer a, gconstpointer b)
 {
-	gint64 timestamp_a = gs_app_get_install_date (*(GsApp **) a);
-	gint64 timestamp_b = gs_app_get_install_date (*(GsApp **) b);
+	gint64 timestamp_a = gs_app_get_install_date (*(AsApp **) a);
+	gint64 timestamp_b = gs_app_get_install_date (*(AsApp **) b);
 	if (timestamp_a < timestamp_b)
 		return 1;
 	if (timestamp_a > timestamp_b)
@@ -53,7 +53,7 @@ history_sort_cb (gconstpointer a, gconstpointer b)
 }
 
 void
-gs_history_dialog_set_app (GsHistoryDialog *dialog, GsApp *app)
+gs_history_dialog_set_app (GsHistoryDialog *dialog, AsApp *app)
 {
 	GsHistoryDialogPrivate *priv = gs_history_dialog_get_instance_private (dialog);
 	const gchar *tmp;
@@ -74,7 +74,7 @@ gs_history_dialog_set_app (GsHistoryDialog *dialog, GsApp *app)
 		box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0));
 
 		/* add the action */
-		switch (gs_app_get_state (app)) {
+		switch (as_app_get_state (app)) {
 		case AS_APP_STATE_AVAILABLE:
 		case AS_APP_STATE_REMOVING:
 			/* TRANSLATORS: this is the status in the history UI,

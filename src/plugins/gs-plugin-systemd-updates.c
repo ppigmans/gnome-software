@@ -110,7 +110,7 @@ gs_plugin_add_updates (GsPlugin *plugin,
 		       GCancellable *cancellable,
 		       GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 	gboolean ret;
 	gchar **package_ids = NULL;
 	gchar **split;

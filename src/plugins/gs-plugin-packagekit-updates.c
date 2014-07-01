@@ -108,7 +108,7 @@ gs_plugin_add_updates (GsPlugin *plugin,
 {
 	gboolean ret = TRUE;
 	GPtrArray *array = NULL;
-	GsApp *app;
+	AsApp *app;
 	guint i;
 	PkBitfield filter;
 	PkPackage *pkg;

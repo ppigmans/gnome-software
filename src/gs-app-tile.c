@@ -29,7 +29,7 @@
 
 struct _GsAppTilePrivate
 {
-	GsApp		*app;
+	AsApp		*app;
 	GtkWidget	*button;
 	GtkWidget	*image;
 	GtkWidget	*name;
@@ -48,7 +48,7 @@ enum {
 
 static guint signals [SIGNAL_LAST] = { 0 };
 
-GsApp *
+AsApp *
 gs_app_tile_get_app (GsAppTile *tile)
 {
 	GsAppTilePrivate *priv;
@@ -60,7 +60,7 @@ gs_app_tile_get_app (GsAppTile *tile)
 }
 
 static void
-app_state_changed (GsApp *app, GParamSpec *pspec, GsAppTile *tile)
+app_state_changed (AsApp *app, GParamSpec *pspec, GsAppTile *tile)
 {
 	AtkObject *accessible;
 	GsAppTilePrivate *priv;
@@ -72,11 +72,11 @@ app_state_changed (GsApp *app, GParamSpec *pspec, GsAppTile *tile)
         accessible = gtk_widget_get_accessible (priv->button);
 
 	label = gtk_bin_get_child (GTK_BIN (priv->eventbox));
-	switch (gs_app_get_state (app)) {
+	switch (as_app_get_state (app)) {
 	case AS_APP_STATE_INSTALLED:
 		installed = TRUE;
 		name = g_strdup_printf ("%s (%s)",
-					gs_app_get_name (app),
+					as_app_get_name (app, NULL),
 					_("Installed"));
 		/* TRANSLATORS: this is the small blue label on the tile
 		 * that tells the user the application is installed */
@@ -85,7 +85,7 @@ app_state_changed (GsApp *app, GParamSpec *pspec, GsAppTile *tile)
 	case AS_APP_STATE_INSTALLING:
 		installed = TRUE;
 		name = g_strdup_printf ("%s (%s)",
-					gs_app_get_name (app),
+					as_app_get_name (app, NULL),
 					_("Installing"));
 		/* TRANSLATORS: this is the small blue label on the tile
 		 * that tells the user the application is being installing */
@@ -94,7 +94,7 @@ app_state_changed (GsApp *app, GParamSpec *pspec, GsAppTile *tile)
 	case AS_APP_STATE_REMOVING:
 		installed = TRUE;
 		name = g_strdup_printf ("%s (%s)",
-					gs_app_get_name (app),
+					as_app_get_name (app, NULL),
 					_("Removing"));
 		/* TRANSLATORS: this is the small blue label on the tile
 		 * that tells the user the application is being removed */
@@ -103,7 +103,7 @@ app_state_changed (GsApp *app, GParamSpec *pspec, GsAppTile *tile)
 	case AS_APP_STATE_UPDATABLE:
 		installed = TRUE;
 		name = g_strdup_printf ("%s (%s)",
-					gs_app_get_name (app),
+					as_app_get_name (app, NULL),
 					_("Updates"));
 		/* TRANSLATORS: this is the small blue label on the tile
 		 * that tells the user there is an update for the installed
@@ -114,7 +114,7 @@ app_state_changed (GsApp *app, GParamSpec *pspec, GsAppTile *tile)
         case AS_APP_STATE_AVAILABLE:
         default:
 		installed = FALSE;
-		name = g_strdup (gs_app_get_name (app));
+		name = g_strdup (as_app_get_name (app, NULL));
                 break;
         }
 
@@ -122,13 +122,13 @@ app_state_changed (GsApp *app, GParamSpec *pspec, GsAppTile *tile)
 
 	if (GTK_IS_ACCESSIBLE (accessible)) {
 		atk_object_set_name (accessible, name);
-		atk_object_set_description (accessible, gs_app_get_summary (app));
+		atk_object_set_description (accessible, as_app_get_comment (app, NULL));
 	}
 	g_free (name);
 }
 
 void
-gs_app_tile_set_app (GsAppTile *tile, GsApp *app)
+gs_app_tile_set_app (GsAppTile *tile, AsApp *app)
 {
 	GsAppTilePrivate *priv;
 	const gchar *summary;
@@ -165,8 +165,8 @@ gs_app_tile_set_app (GsAppTile *tile, GsApp *app)
         app_state_changed (priv->app, NULL, tile);
 
 	gtk_image_set_from_pixbuf (GTK_IMAGE (priv->image), gs_app_get_pixbuf (app));
-	gtk_label_set_label (GTK_LABEL (priv->name), gs_app_get_name (app));
-	summary = gs_app_get_summary (app);
+	gtk_label_set_label (GTK_LABEL (priv->name), as_app_get_name (app, NULL));
+	summary = as_app_get_comment (app, NULL);
 	gtk_label_set_label (GTK_LABEL (priv->summary), summary);
 	gtk_widget_set_visible (priv->summary, summary && summary[0]);
 }
@@ -236,7 +236,7 @@ gs_app_tile_class_init (GsAppTileClass *klass)
 }
 
 GtkWidget *
-gs_app_tile_new (GsApp *cat)
+gs_app_tile_new (AsApp *cat)
 {
 	GsAppTile *tile;
 

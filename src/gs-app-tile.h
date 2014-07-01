@@ -53,10 +53,10 @@ struct _GsAppTileClass
 };
 
 GType		 gs_app_tile_get_type	(void);
-GtkWidget	*gs_app_tile_new	(GsApp		*app);
-GsApp		*gs_app_tile_get_app    (GsAppTile	*tile);
+GtkWidget	*gs_app_tile_new	(AsApp		*app);
+AsApp		*gs_app_tile_get_app    (GsAppTile	*tile);
 void		 gs_app_tile_set_app	(GsAppTile	*tile,
-					 GsApp		*cat);
+					 AsApp		*cat);
 
 G_END_DECLS
 

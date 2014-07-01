@@ -35,7 +35,7 @@ struct GsPluginPrivate {
 	gsize			 done_init;
 };
 
-static gboolean gs_plugin_refine_item (GsPlugin *plugin, GsApp *app, AsApp *item, GError **error);
+static gboolean gs_plugin_refine_item (GsPlugin *plugin, AsApp *app, AsApp *item, GError **error);
 
 /**
  * gs_plugin_get_name:
@@ -224,7 +224,7 @@ out:
  * gs_plugin_refine_item_pixbuf:
  */
 static void
-gs_plugin_refine_item_pixbuf (GsPlugin *plugin, GsApp *app, AsApp *item)
+gs_plugin_refine_item_pixbuf (GsPlugin *plugin, AsApp *app, AsApp *item)
 {
 	GError *error = NULL;
 	const gchar *icon;
@@ -235,10 +235,10 @@ gs_plugin_refine_item_pixbuf (GsPlugin *plugin, GsApp *app, AsApp *item)
 	icon = as_app_get_icon (item);
 	switch (as_app_get_icon_kind (item)) {
 	case AS_ICON_KIND_REMOTE:
-		gs_app_set_icon (app, icon);
+		as_app_set_icon (app, icon, -1);
 		break;
 	case AS_ICON_KIND_STOCK:
-		gs_app_set_icon (app, icon);
+		as_app_set_icon (app, icon, -1);
 		ret = gs_app_load_icon (app, &error);
 		if (!ret) {
 			g_warning ("failed to load stock icon %s: %s",
@@ -252,7 +252,7 @@ gs_plugin_refine_item_pixbuf (GsPlugin *plugin, GsApp *app, AsApp *item)
 		/* we assume <icon type="local">gnome-chess.png</icon> */
 		icon_dir = as_app_get_icon_path (item);
 		icon_path = g_build_filename (icon_dir, icon, NULL);
-		gs_app_set_icon (app, icon_path);
+		as_app_set_icon (app, icon_path, -1);
 		ret = gs_app_load_icon (app, &error);
 		if (!ret) {
 			g_warning ("falling back to searching for %s", icon_path);
@@ -266,7 +266,7 @@ gs_plugin_refine_item_pixbuf (GsPlugin *plugin, GsApp *app, AsApp *item)
 				g_warning ("failed to load cached icon %s", icon);
 				goto out;
 			}
-			gs_app_set_icon (app, icon_path);
+			as_app_set_icon (app, icon_path, -1);
 			ret = gs_app_load_icon (app, &error);
 			if (!ret) {
 				g_warning ("failed to load cached icon %s: %s",
@@ -288,7 +288,7 @@ out:
  * gs_plugin_refine_add_addons:
  */
 static void
-gs_plugin_refine_add_addons (GsPlugin *plugin, GsApp *app, AsApp *item)
+gs_plugin_refine_add_addons (GsPlugin *plugin, AsApp *app, AsApp *item)
 {
 	GPtrArray *addons;
 	guint i;
@@ -299,7 +299,7 @@ gs_plugin_refine_add_addons (GsPlugin *plugin, GsApp *app, AsApp *item)
 
 	for (i = 0; i < addons->len; i++) {
 		AsApp *as_addon = g_ptr_array_index (addons, i);
-		GsApp *addon;
+		AsApp *addon;
 		GError *error = NULL;
 		gboolean ret;
 
@@ -320,7 +320,7 @@ gs_plugin_refine_add_addons (GsPlugin *plugin, GsApp *app, AsApp *item)
  * gs_plugin_refine_add_screenshots:
  */
 static void
-gs_plugin_refine_add_screenshots (GsApp *app, AsApp *item)
+gs_plugin_refine_add_screenshots (AsApp *app, AsApp *item)
 {
 	AsScreenshot *ss;
 	GPtrArray *images_as;
@@ -334,7 +334,7 @@ gs_plugin_refine_add_screenshots (GsApp *app, AsApp *item)
 
 	/* does the app already have some */
 	gs_app_add_kudo (app, GS_APP_KUDO_HAS_SCREENSHOTS);
-	if (gs_app_get_screenshots(app)->len > 0)
+	if (as_app_get_screenshots(app)->len > 0)
 		return;
 
 	/* add any we know */
@@ -346,7 +346,7 @@ gs_plugin_refine_add_screenshots (GsApp *app, AsApp *item)
 			continue;
 		if (as_screenshot_get_kind (ss) == AS_SCREENSHOT_KIND_UNKNOWN)
 			continue;
-		gs_app_add_screenshot (app, ss);
+		as_app_add_screenshot (app, ss);
 	}
 }
 
@@ -354,7 +354,7 @@ gs_plugin_refine_add_screenshots (GsApp *app, AsApp *item)
  * gs_plugin_appstream_set_license:
  */
 static void
-gs_plugin_appstream_set_license (GsApp *app, const gchar *license_string)
+gs_plugin_appstream_set_license (AsApp *app, const gchar *license_string)
 {
 	GString *urld;
 	gchar **tokens;
@@ -382,7 +382,7 @@ gs_plugin_appstream_set_license (GsApp *app, const gchar *license_string)
 					"<a href=\"http://spdx.org/licenses/%s\">%s</a>",
 					tokens[i], tokens[i]);
 	}
-	gs_app_set_licence (app, urld->str);
+	as_app_set_project_license (app, urld->str, -1);
 	g_strfreev (tokens);
 	g_string_free (urld, TRUE);
 }
@@ -414,11 +414,11 @@ gs_plugin_appstream_is_recent_release (AsApp *app)
  */
 static gboolean
 gs_plugin_refine_item (GsPlugin *plugin,
-		       GsApp *app,
+		       AsApp *app,
 		       AsApp *item,
 		       GError **error)
 {
-	GHashTable *urls;
+//	GHashTable *urls;
 	GPtrArray *pkgnames;
 	const gchar *tmp;
 	gboolean ret = TRUE;
@@ -435,7 +435,7 @@ gs_plugin_refine_item (GsPlugin *plugin,
 	}
 
 	/* is installed already */
-	if (gs_app_get_state (app) == AS_APP_STATE_UNKNOWN) {
+	if (as_app_get_state (app) == AS_APP_STATE_UNKNOWN) {
 		switch (as_app_get_source_kind (item)) {
 		case AS_APP_SOURCE_KIND_APPDATA:
 		case AS_APP_SOURCE_KIND_DESKTOP:
@@ -450,14 +450,14 @@ gs_plugin_refine_item (GsPlugin *plugin,
 
 	/* give the desktopdb plugin a fighting chance */
 	if (as_app_get_source_file (item) != NULL &&
-	    gs_app_get_metadata_item (app, "DataDir::desktop-filename") == NULL) {
-		gs_app_set_metadata (app, "DataDir::desktop-filename",
-				     as_app_get_source_file (item));
+	    as_app_get_metadata_item (app, "DataDir::desktop-filename") == NULL) {
+		as_app_add_metadata (app, "DataDir::desktop-filename",
+				     as_app_get_source_file (item), -1);
 	}
 
 	/* set id */
-	if (as_app_get_id (item) != NULL && gs_app_get_id (app) == NULL)
-		gs_app_set_id (app, as_app_get_id (item));
+	if (as_app_get_id (item) != NULL && as_app_get_id (app) == NULL)
+		as_app_set_id_full (app, as_app_get_id_full (item), -1);
 
 	/* set name */
 	tmp = as_app_get_name (item, NULL);
@@ -476,28 +476,28 @@ gs_plugin_refine_item (GsPlugin *plugin,
 	}
 
 	/* add urls */
-	urls = as_app_get_urls (item);
-	if (g_hash_table_size (urls) > 0 &&
-	    gs_app_get_url (app, GS_APP_URL_KIND_HOMEPAGE) == NULL) {
-		GList *keys;
-		GList *l;
-		keys = g_hash_table_get_keys (urls);
-		for (l = keys; l != NULL; l = l->next) {
-			gs_app_set_url (app,
-					l->data,
-					g_hash_table_lookup (urls, l->data));
-		}
-		g_list_free (keys);
-	}
+//	urls = as_app_get_urls (item);
+//	if (g_hash_table_size (urls) > 0 &&
+//	    as_app_get_url_item (app, AS_URL_KIND_HOMEPAGE) == NULL) {
+//		GList *keys;
+//		GList *l;
+//		keys = g_hash_table_get_keys (urls);
+//		for (l = keys; l != NULL; l = l->next) {
+//			as_app_add_url (app,
+//					l->data,
+//					g_hash_table_lookup (urls, l->data));
+//		}
+//		g_list_free (keys);
+//	}
 
 	/* set licence */
-	if (as_app_get_project_license (item) != NULL && gs_app_get_licence (app) == NULL)
+	if (as_app_get_project_license (item) != NULL && as_app_get_project_license (app) == NULL)
 		gs_plugin_appstream_set_license (app, as_app_get_project_license (item));
 
 	/* set keywords */
 	if (as_app_get_keywords (item) != NULL &&
-	    gs_app_get_keywords (app) == NULL) {
-		gs_app_set_keywords (app, as_app_get_keywords (item));
+	    as_app_get_keywords (app) == NULL) {
+//		as_app_set_keywords (app, as_app_get_keywords (item));
 		gs_app_add_kudo (app, GS_APP_KUDO_HAS_KEYWORDS);
 	}
 
@@ -520,14 +520,14 @@ gs_plugin_refine_item (GsPlugin *plugin,
 		gs_plugin_refine_item_pixbuf (plugin, app, item);
 
 	/* set categories */
-	if (as_app_get_categories (item) != NULL &&
-	    gs_app_get_categories (app)->len == 0)
-		gs_app_set_categories (app, as_app_get_categories (item));
+//	if (as_app_get_categories (item) != NULL &&
+//	    as_app_get_categories (app)->len == 0)
+//		as_app_set_categories (app, as_app_get_categories (item));
 
 	/* set project group */
-	if (as_app_get_project_group (item) != NULL &&
-	    gs_app_get_project_group (app) == NULL)
-		gs_app_set_project_group (app, as_app_get_project_group (item));
+//	if (as_app_get_project_group (item) != NULL &&
+//	    as_app_get_project_group (app) == NULL)
+//		as_app_set_project_group (app, as_app_get_project_group (item));
 
 	/* this is a core application for the desktop and cannot be removed */
 	if (as_app_has_compulsory_for_desktop (item, "GNOME") &&
@@ -535,8 +535,8 @@ gs_plugin_refine_item (GsPlugin *plugin,
 		gs_app_set_kind (app, GS_APP_KIND_SYSTEM);
 
 	/* set id kind */
-	if (gs_app_get_id_kind (app) == AS_ID_KIND_UNKNOWN)
-		gs_app_set_id_kind (app, as_app_get_id_kind (item));
+	if (as_app_get_id_kind (app) == AS_ID_KIND_UNKNOWN)
+		as_app_set_id_kind (app, as_app_get_id_kind (item));
 
 	/* set package names */
 	pkgnames = as_app_get_pkgnames (item);
@@ -581,7 +581,7 @@ out:
  */
 static gboolean
 gs_plugin_refine_from_id (GsPlugin *plugin,
-			  GsApp *app,
+			  AsApp *app,
 			  gboolean *found,
 			  GError **error)
 {
@@ -590,7 +590,7 @@ gs_plugin_refine_from_id (GsPlugin *plugin,
 	AsApp *item = NULL;
 
 	/* find anything that matches the ID */
-	id = gs_app_get_id_full (app);
+	id = as_app_get_id_full (app);
 	if (id == NULL)
 		goto out;
 	item = as_store_get_app_by_id (plugin->priv->store, id);
@@ -611,7 +611,7 @@ out:
  */
 static gboolean
 gs_plugin_refine_from_pkgname (GsPlugin *plugin,
-			       GsApp *app,
+			       AsApp *app,
 			       GError **error)
 {
 	AsApp *item = NULL;
@@ -655,7 +655,7 @@ gs_plugin_refine (GsPlugin *plugin,
 	gboolean ret;
 	gboolean found;
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 
 	/* load XML files */
 	if (g_once_init_enter (&plugin->priv->done_init)) {
@@ -667,7 +667,7 @@ gs_plugin_refine (GsPlugin *plugin,
 
 	gs_profile_start (plugin->profile, "appstream::refine");
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		ret = gs_plugin_refine_from_id (plugin, app, &found, error);
 		if (!ret) {
 			gs_profile_stop (plugin->profile, "appstream::refine");
@@ -702,7 +702,7 @@ gs_plugin_add_category_apps (GsPlugin *plugin,
 	const gchar *search_id1;
 	const gchar *search_id2 = NULL;
 	gboolean ret = TRUE;
-	GsApp *app;
+	AsApp *app;
 	AsApp *item;
 	GsCategory *parent;
 	GPtrArray *array;
@@ -765,7 +765,7 @@ gs_plugin_add_search (GsPlugin *plugin,
 	AsApp *item;
 	gboolean ret = TRUE;
 	GPtrArray *array;
-	GsApp *app;
+	AsApp *app;
 	guint i;
 
 	/* load XML files */
@@ -806,7 +806,7 @@ gs_plugin_add_installed (GsPlugin *plugin,
 	AsApp *item;
 	gboolean ret = TRUE;
 	GPtrArray *array;
-	GsApp *app;
+	AsApp *app;
 	guint i;
 
 	/* load XML files */

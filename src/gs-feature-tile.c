@@ -28,7 +28,7 @@
 
 struct _GsFeatureTilePrivate
 {
-	GsApp		*app;
+	AsApp		*app;
 	GtkWidget	*button;
 	GtkWidget	*image;
 	GtkWidget	*title;
@@ -46,7 +46,7 @@ enum {
 
 static guint signals [SIGNAL_LAST] = { 0 };
 
-GsApp *
+AsApp *
 gs_feature_tile_get_app (GsFeatureTile *tile)
 {
 	GsFeatureTilePrivate *priv;
@@ -58,7 +58,7 @@ gs_feature_tile_get_app (GsFeatureTile *tile)
 }
 
 static void
-app_state_changed (GsApp *app, GParamSpec *pspec, GsFeatureTile *tile)
+app_state_changed (AsApp *app, GParamSpec *pspec, GsFeatureTile *tile)
 {
         GsFeatureTilePrivate *priv;
         AtkObject *accessible;
@@ -67,34 +67,34 @@ app_state_changed (GsApp *app, GParamSpec *pspec, GsFeatureTile *tile)
         priv = gs_feature_tile_get_instance_private (tile);
         accessible = gtk_widget_get_accessible (priv->button);
 
-        switch (gs_app_get_state (app)) {
+        switch (as_app_get_state (app)) {
         case AS_APP_STATE_INSTALLED:
         case AS_APP_STATE_INSTALLING:
         case AS_APP_STATE_REMOVING:
                 name = g_strdup_printf ("%s (%s)",
-                                        gs_app_get_name (app),
+                                        as_app_get_name (app, NULL),
                                         _("Installed"));
                 break;
         case AS_APP_STATE_UPDATABLE:
                 name = g_strdup_printf ("%s (%s)",
-                                        gs_app_get_name (app),
+                                        as_app_get_name (app, NULL),
                                         _("Updates"));
                 break;
         case AS_APP_STATE_AVAILABLE:
         default:
-                name = g_strdup (gs_app_get_name (app));
+                name = g_strdup (as_app_get_name (app, NULL));
                 break;
         }
 
         if (GTK_IS_ACCESSIBLE (accessible)) {
                 atk_object_set_name (accessible, name);
-                atk_object_set_description (accessible, gs_app_get_summary (app));
+                atk_object_set_description (accessible, as_app_get_comment (app, NULL));
         }
         g_free (name);
 }
 
 void
-gs_feature_tile_set_app (GsFeatureTile *tile, GsApp *app)
+gs_feature_tile_set_app (GsFeatureTile *tile, AsApp *app)
 {
 	GsFeatureTilePrivate *priv;
 	GString *data = NULL;
@@ -121,21 +121,21 @@ gs_feature_tile_set_app (GsFeatureTile *tile, GsApp *app)
                           G_CALLBACK (app_state_changed), tile);
         app_state_changed (priv->app, NULL, tile);
 
-	gtk_label_set_label (GTK_LABEL (priv->title), gs_app_get_name (app));
-	gtk_label_set_label (GTK_LABEL (priv->subtitle), gs_app_get_summary (app));
+	gtk_label_set_label (GTK_LABEL (priv->title), as_app_get_name (app, NULL));
+	gtk_label_set_label (GTK_LABEL (priv->subtitle), as_app_get_comment (app, NULL));
 
 	/* check the app has the featured data */
-	text_color = gs_app_get_metadata_item (app, "Featured::text-color");
+	text_color = as_app_get_metadata_item (app, "Featured::text-color");
 	if (text_color == NULL) {
 		tmp = gs_app_to_string (app);
 		g_warning ("%s has no featured data: %s",
-			   gs_app_get_id (app), tmp);
+			   as_app_get_id (app), tmp);
 		g_free (tmp);
 		goto out;
 	}
-	background = gs_app_get_metadata_item (app, "Featured::background");
-	stroke_color = gs_app_get_metadata_item (app, "Featured::stroke-color");
-	text_shadow = gs_app_get_metadata_item (app, "Featured::text-shadow");
+	background = as_app_get_metadata_item (app, "Featured::background");
+	stroke_color = as_app_get_metadata_item (app, "Featured::stroke-color");
+	text_shadow = as_app_get_metadata_item (app, "Featured::text-shadow");
 
 	data = g_string_sized_new (1024);
 	g_string_append (data, ".button.featured-tile {\n");
@@ -233,7 +233,7 @@ gs_feature_tile_class_init (GsFeatureTileClass *klass)
 }
 
 GtkWidget *
-gs_feature_tile_new (GsApp *app)
+gs_feature_tile_new (AsApp *app)
 {
 	GsFeatureTile *tile;
 

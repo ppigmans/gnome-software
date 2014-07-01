@@ -76,7 +76,7 @@ gs_plugin_destroy (GsPlugin *plugin)
  */
 static void
 gs_plugin_desktopdb_set_metadata (GsPlugin *plugin,
-				  GsApp *app,
+				  AsApp *app,
 				  const gchar *pkg_name)
 {
 	gchar *desktop_file;
@@ -119,9 +119,9 @@ gs_plugin_desktopdb_set_metadata (GsPlugin *plugin,
 	}
 
 	/* also set the ID if it's missing */
-	if (gs_app_get_id (app) == NULL) {
+	if (as_app_get_id (app) == NULL) {
 		id = g_path_get_basename (desktop_file);
-		gs_app_set_id (app, id);
+		as_app_set_id_full (app, id, -1);
 	}
 
 	/* promote to an app if just a package */
@@ -129,12 +129,12 @@ gs_plugin_desktopdb_set_metadata (GsPlugin *plugin,
 		gs_app_set_kind (app, GS_APP_KIND_NORMAL);
 
 	/* promote to a desktop type */
-	if (gs_app_get_id_kind (app) == AS_ID_KIND_UNKNOWN)
-		gs_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
+	if (as_app_get_id_kind (app) == AS_ID_KIND_UNKNOWN)
+		as_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
 
-	gs_app_set_metadata (app,
+	as_app_add_metadata (app,
 			     "DataDir::desktop-filename",
-			     desktop_file);
+			     desktop_file, -1);
 	g_free (desktop_file);
 
 out:
@@ -155,7 +155,7 @@ gs_plugin_refine (GsPlugin *plugin,
 {
 	GList *l;
 	GPtrArray *sources;
-	GsApp *app;
+	AsApp *app;
 	const gchar *pkgname;
 	gboolean ret = TRUE;
 	guint i;
@@ -171,8 +171,8 @@ gs_plugin_refine (GsPlugin *plugin,
 
 	/* can we convert a package to an application */
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (gs_app_get_metadata_item (app, "DataDir::desktop-filename") != NULL)
+		app = AS_APP (l->data);
+		if (as_app_get_metadata_item (app, "DataDir::desktop-filename") != NULL)
 			continue;
 		sources = gs_app_get_sources (app);
 		for (i = 0; i < sources->len; i++) {

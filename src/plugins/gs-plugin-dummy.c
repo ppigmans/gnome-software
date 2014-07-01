@@ -83,7 +83,7 @@ gs_plugin_add_updates (GsPlugin *plugin,
 		       GCancellable *cancellable,
 		       GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 
 	/* update UI as this might take some time */
 	gs_plugin_status_update (plugin, NULL, GS_PLUGIN_STATUS_WAITING);
@@ -96,7 +96,7 @@ gs_plugin_add_updates (GsPlugin *plugin,
 	gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "Boxes");
 	gs_app_set_summary (app, GS_APP_QUALITY_NORMAL, "Do not segfault when using newer versons of libvirt.");
 	gs_app_set_kind (app, GS_APP_KIND_NORMAL);
-	gs_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
+	as_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
 	gs_plugin_add_app (list, app);
 
 	/* add an OS update */
@@ -104,7 +104,7 @@ gs_plugin_add_updates (GsPlugin *plugin,
 	gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "libvirt-glib-devel");
 	gs_app_set_summary (app, GS_APP_QUALITY_NORMAL, "Fix several memory leaks.");
 	gs_app_set_kind (app, GS_APP_KIND_PACKAGE);
-	gs_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
+	as_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
 	gs_plugin_add_app (list, app);
 
 	/* add a second OS update */
@@ -112,7 +112,7 @@ gs_plugin_add_updates (GsPlugin *plugin,
 	gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "gnome-boxes-libs");
 	gs_app_set_summary (app, GS_APP_QUALITY_NORMAL, "Do not segfault when using newer versons of libvirt.");
 	gs_app_set_kind (app, GS_APP_KIND_PACKAGE);
-	gs_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
+	as_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
 	gs_plugin_add_app (list, app);
 
 	return TRUE;
@@ -127,7 +127,7 @@ gs_plugin_add_installed (GsPlugin *plugin,
 			 GCancellable *cancellable,
 			 GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_app_new ("gnome-power-manager");
 	gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "Power Manager");
@@ -135,7 +135,7 @@ gs_plugin_add_installed (GsPlugin *plugin,
 	gs_app_set_state (app, AS_APP_STATE_AVAILABLE);
 	gs_app_set_kind (app, GS_APP_KIND_NORMAL);
 	gs_plugin_add_app (list, app);
-	gs_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
+	as_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
 
 	return TRUE;
 }
@@ -149,7 +149,7 @@ gs_plugin_add_popular (GsPlugin *plugin,
 		       GCancellable *cancellable,
 		       GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_app_new ("gnome-power-manager");
 	gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "Power Manager");
@@ -157,7 +157,7 @@ gs_plugin_add_popular (GsPlugin *plugin,
 	gs_app_set_state (app, AS_APP_STATE_AVAILABLE);
 	gs_app_set_kind (app, GS_APP_KIND_NORMAL);
 	gs_plugin_add_app (list, app);
-	gs_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
+	as_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
 
 	return TRUE;
 }
@@ -172,13 +172,13 @@ gs_plugin_refine (GsPlugin *plugin,
 		  GCancellable *cancellable,
 		  GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 	GList *l;
 
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (gs_app_get_name (app) == NULL) {
-			if (g_strcmp0 (gs_app_get_id (app), "gnome-boxes") == 0) {
+		app = AS_APP (l->data);
+		if (as_app_get_name (app, NULL) == NULL) {
+			if (g_strcmp0 (as_app_get_id (app), "gnome-boxes") == 0) {
 				gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "Boxes");
 				gs_app_set_summary (app, GS_APP_QUALITY_NORMAL, "A simple GNOME 3 application to access remote or virtual systems");
 			}
@@ -197,15 +197,15 @@ gs_plugin_add_category_apps (GsPlugin *plugin,
 			     GCancellable *cancellable,
 			     GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 	app = gs_app_new ("gnome-boxes");
 	gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "Boxes");
 	gs_app_set_summary (app, GS_APP_QUALITY_NORMAL, "View and use virtual machines");
-	gs_app_set_url (app, GS_APP_URL_KIND_HOMEPAGE, "http://www.box.org");
+	as_app_add_url (app, AS_URL_KIND_HOMEPAGE, "http://www.box.org", -1);
 	gs_app_set_kind (app, GS_APP_KIND_NORMAL);
 	gs_app_set_state (app, AS_APP_STATE_AVAILABLE);
 	gs_app_set_pixbuf (app, gdk_pixbuf_new_from_file ("/usr/share/icons/hicolor/48x48/apps/gnome-boxes.png", NULL));
-	gs_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
+	as_app_set_id_kind (app, AS_ID_KIND_DESKTOP);
 	gs_plugin_add_app (list, app);
 	return TRUE;
 }

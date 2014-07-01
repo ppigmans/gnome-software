@@ -50,7 +50,7 @@ static void	gs_shell_finalize	(GObject	*object);
 typedef struct {
 	GsShellMode	 mode;
 	GtkWidget	*focus;
-	GsApp		*app;
+	AsApp		*app;
 	GsCategory	*category;
 } BackEntry;
 
@@ -105,7 +105,7 @@ gs_shell_activate (GsShell *shell)
 static void
 gs_shell_change_mode (GsShell *shell,
 		      GsShellMode mode,
-		      GsApp *app,
+		      AsApp *app,
 		      gpointer data,
 		      gboolean scroll_up)
 {
@@ -670,7 +670,7 @@ gs_shell_show_sources (GsShell *shell)
 }
 
 void
-gs_shell_show_app (GsShell *shell, GsApp *app)
+gs_shell_show_app (GsShell *shell, AsApp *app)
 {
 	save_back_entry (shell);
 	gs_shell_change_mode (shell, GS_SHELL_MODE_DETAILS, app, NULL, TRUE);
@@ -705,7 +705,7 @@ gs_shell_show_filename (GsShell *shell, const gchar *filename)
 
 typedef struct {
 	GsShell *shell;
-	GsApp *app;
+	AsApp *app;
 } RefineData;
 
 static void

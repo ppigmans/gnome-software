@@ -151,8 +151,8 @@ gs_plugin_add_sources_related (GsPlugin *plugin,
 {
 	GList *installed = NULL;
 	GList *l;
-	GsApp *app;
-	GsApp *app_tmp;
+	AsApp *app;
+	AsApp *app_tmp;
 	PkBitfield filter;
 	PkResults *results = NULL;
 	const gchar *id;
@@ -181,7 +181,7 @@ gs_plugin_add_sources_related (GsPlugin *plugin,
 	if (!ret)
 		goto out;
 	for (l = installed; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		split = pk_package_id_split (gs_app_get_source_id_default (app));
 		if (g_str_has_prefix (split[PK_PACKAGE_ID_DATA], "installed:")) {
 			id = split[PK_PACKAGE_ID_DATA] + 10;
@@ -212,7 +212,7 @@ gs_plugin_add_sources (GsPlugin *plugin,
 		       GError **error)
 {
 	GPtrArray *array = NULL;
-	GsApp *app;
+	AsApp *app;
 	PkBitfield filter;
 	PkRepoDetail *rd;
 	PkResults *results;
@@ -279,7 +279,7 @@ out:
  */
 gboolean
 gs_plugin_app_install (GsPlugin *plugin,
-		       GsApp *app,
+		       AsApp *app,
 		       GCancellable *cancellable,
 		       GError **error)
 {
@@ -298,7 +298,7 @@ gs_plugin_app_install (GsPlugin *plugin,
 		goto out;
 
 	/* get the list of available package ids to install */
-	switch (gs_app_get_state (app)) {
+	switch (as_app_get_state (app)) {
 	case AS_APP_STATE_AVAILABLE:
 	case AS_APP_STATE_UPDATABLE:
 		source_ids = gs_app_get_source_ids (app);
@@ -320,7 +320,7 @@ gs_plugin_app_install (GsPlugin *plugin,
 
 		addons = gs_app_get_addons (app);
 		for (i = 0; i < addons->len; i++) {
-			GsApp *addon = g_ptr_array_index (addons, i);
+			AsApp *addon = g_ptr_array_index (addons, i);
 
 			if (!gs_app_get_to_be_installed (addon))
 				continue;
@@ -346,7 +346,7 @@ gs_plugin_app_install (GsPlugin *plugin,
 		gs_app_set_state (app, AS_APP_STATE_INSTALLING);
 		addons = gs_app_get_addons (app);
 		for (i = 0; i < addons->len; i++) {
-			GsApp *addon = g_ptr_array_index (addons, i);
+			AsApp *addon = g_ptr_array_index (addons, i);
 			if (gs_app_get_to_be_installed (addon))
 				gs_app_set_state (addon, AS_APP_STATE_INSTALLING);
 		}
@@ -361,7 +361,7 @@ gs_plugin_app_install (GsPlugin *plugin,
 		}
 		break;
 	case AS_APP_STATE_AVAILABLE_LOCAL:
-		package_id = gs_app_get_metadata_item (app, "PackageKit::local-filename");
+		package_id = as_app_get_metadata_item (app, "PackageKit::local-filename");
 		if (package_id == NULL) {
 			ret = FALSE;
 			g_set_error_literal (error,
@@ -388,7 +388,7 @@ gs_plugin_app_install (GsPlugin *plugin,
 			     GS_PLUGIN_ERROR,
 			     GS_PLUGIN_ERROR_FAILED,
 			     "do not know how to install app in state %s",
-			     as_app_state_to_string (gs_app_get_state (app)));
+			     as_app_state_to_string (as_app_get_state (app)));
 		goto out;
 	}
 
@@ -420,7 +420,7 @@ out:
  */
 static gboolean
 gs_plugin_app_source_disable (GsPlugin *plugin,
-			      GsApp *app,
+			      AsApp *app,
 			      GCancellable *cancellable,
 			      GError **error)
 {
@@ -430,7 +430,7 @@ gs_plugin_app_source_disable (GsPlugin *plugin,
 	/* do sync call */
 	gs_plugin_status_update (plugin, NULL, GS_PLUGIN_STATUS_WAITING);
 	results = pk_client_repo_enable (PK_CLIENT (plugin->priv->task),
-					 gs_app_get_id (app),
+					 as_app_get_id (app),
 					 FALSE,
 					 cancellable,
 					 gs_plugin_packagekit_progress_cb, plugin,
@@ -450,7 +450,7 @@ out:
  */
 static gboolean
 gs_plugin_app_source_remove (GsPlugin *plugin,
-			     GsApp *app,
+			     AsApp *app,
 			     GCancellable *cancellable,
 			     GError **error)
 {
@@ -463,7 +463,7 @@ gs_plugin_app_source_remove (GsPlugin *plugin,
 	gs_plugin_status_update (plugin, NULL, GS_PLUGIN_STATUS_WAITING);
 	results = pk_client_repo_remove (PK_CLIENT (plugin->priv->task),
 					 pk_bitfield_from_enums (PK_TRANSACTION_FLAG_ENUM_NONE, -1),
-					 gs_app_get_id (app),
+					 as_app_get_id (app),
 					 TRUE,
 					 cancellable,
 					 gs_plugin_packagekit_progress_cb, plugin,
@@ -493,7 +493,7 @@ out:
  */
 gboolean
 gs_plugin_app_remove (GsPlugin *plugin,
-		      GsApp *app,
+		      AsApp *app,
 		      GCancellable *cancellable,
 		      GError **error)
 {

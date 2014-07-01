@@ -75,7 +75,7 @@ static void
 popular_tile_clicked (GsPopularTile *tile, gpointer data)
 {
 	GsShellOverview *shell = GS_SHELL_OVERVIEW (data);
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_popular_tile_get_app (tile);
 	gs_shell_show_app (shell->priv->shell, app);
@@ -95,7 +95,7 @@ gs_shell_overview_get_popular_cb (GObject *source_object,
 	GError *error = NULL;
 	GList *l;
 	GList *list;
-	GsApp *app;
+	AsApp *app;
 	gint i;
 	GtkWidget *tile;
 
@@ -111,7 +111,7 @@ gs_shell_overview_get_popular_cb (GObject *source_object,
 	gs_container_remove_all (GTK_CONTAINER (priv->box_popular));
 
 	for (l = list, i = 0; l != NULL && i < 6; l = l->next, i++) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		tile = gs_popular_tile_new (app);
 		g_signal_connect (tile, "clicked",
 			  G_CALLBACK (popular_tile_clicked), shell);
@@ -131,7 +131,7 @@ static void
 feature_tile_clicked (GsFeatureTile *tile, gpointer data)
 {
 	GsShellOverview *shell = GS_SHELL_OVERVIEW (data);
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_feature_tile_get_app (tile);
 	gs_shell_show_app (shell->priv->shell, app);
@@ -148,7 +148,7 @@ gs_shell_overview_get_featured_cb (GObject *source_object,
 	GtkWidget *tile;
 	GList *list;
 	GError *error = NULL;
-	GsApp *app;
+	AsApp *app;
 
 	gs_container_remove_all (GTK_CONTAINER (priv->bin_featured));
 
@@ -161,7 +161,7 @@ gs_shell_overview_get_featured_cb (GObject *source_object,
 	}
 
 	/* at the moment, we only care about the first app */
-	app = GS_APP (list->data);
+	app = AS_APP (list->data);
 	tile = gs_feature_tile_new (app);
 	g_signal_connect (tile, "clicked",
 			  G_CALLBACK (feature_tile_clicked), shell);

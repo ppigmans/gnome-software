@@ -41,7 +41,7 @@ gs_plugin_add_featured_app (GList **list,
 			    const gchar *id,
 			    GError **error)
 {
-	GsApp *app = NULL;
+	AsApp *app = NULL;
 	gboolean ret = TRUE;
 	gchar *background = NULL;
 	gchar *stroke_color = NULL;
@@ -70,11 +70,11 @@ gs_plugin_add_featured_app (GList **list,
 	/* add app */
 	app = gs_app_new (id);
 	gs_app_add_kudo (app, GS_APP_KUDO_FEATURED_RECOMMENDED);
-	gs_app_set_metadata (app, "Featured::background", background);
-	gs_app_set_metadata (app, "Featured::stroke-color", stroke_color);
-	gs_app_set_metadata (app, "Featured::text-color", text_color);
+	as_app_add_metadata (app, "Featured::background", background, -1);
+	as_app_add_metadata (app, "Featured::stroke-color", stroke_color, -1);
+	as_app_add_metadata (app, "Featured::text-color", text_color, -1);
 	if (text_shadow != NULL)
-		gs_app_set_metadata (app, "Featured::text-shadow", text_shadow);
+		as_app_add_metadata (app, "Featured::text-shadow", text_shadow, -1);
 	gs_plugin_add_app (list, app);
 out:
 	if (app != NULL)

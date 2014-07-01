@@ -456,7 +456,7 @@ gs_shell_updates_get_updates_cb (GsPluginLoader *plugin_loader,
 	}
 	for (l = list; l != NULL; l = l->next) {
 		gs_update_list_add_app (GS_UPDATE_LIST (priv->list_box_updates),
-		                        GS_APP (l->data));
+		                        AS_APP (l->data));
 	}
 
 out:
@@ -518,7 +518,7 @@ gs_shell_updates_refresh (GsShellUpdates *shell_updates,
 }
 
 static void
-show_update_details (GsApp *app, GsShellUpdates *shell_updates)
+show_update_details (AsApp *app, GsShellUpdates *shell_updates)
 {
 	GsShellUpdatesPrivate *priv = shell_updates->priv;
 	GtkWidget *dialog;
@@ -541,7 +541,7 @@ gs_shell_updates_activated_cb (GtkListBox *list_box,
 			       GtkListBoxRow *row,
 			       GsShellUpdates *shell_updates)
 {
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_app_row_get_app (GS_APP_ROW (row));
 

@@ -170,7 +170,7 @@ out:
  *  - Multiple line text, so first line to summary and the rest to description
  */
 static void
-gs_plugin_packagekit_refresh_set_text (GsApp *app, const gchar *text)
+gs_plugin_packagekit_refresh_set_text (AsApp *app, const gchar *text)
 {
 	gchar *nl;
 	gchar *tmp;
@@ -209,7 +209,7 @@ gs_plugin_filename_to_app (GsPlugin *plugin,
 	gchar **files;
 	gchar **split = NULL;
 	GPtrArray *array = NULL;
-	GsApp *app = NULL;
+	AsApp *app = NULL;
 	PkDetails *item;
 	PkResults *results = NULL;
 
@@ -270,15 +270,15 @@ gs_plugin_filename_to_app (GsPlugin *plugin,
 #endif
 		gs_app_set_name (app, GS_APP_QUALITY_LOWEST, split[PK_PACKAGE_ID_NAME]);
 	gs_app_set_version (app, split[PK_PACKAGE_ID_VERSION]);
-	gs_app_set_metadata (app, "PackageKit::local-filename", filename);
+	as_app_add_metadata (app, "PackageKit::local-filename", filename, -1);
 	gs_app_set_origin (app, basename);
 	gs_app_add_source (app, split[PK_PACKAGE_ID_NAME]);
 	gs_app_add_source_id (app, package_id);
 	gs_plugin_packagekit_refresh_set_text (app,
 					       pk_details_get_description (item));
-	gs_app_set_url (app, GS_APP_URL_KIND_HOMEPAGE, pk_details_get_url (item));
+	as_app_add_url (app, AS_URL_KIND_HOMEPAGE, pk_details_get_url (item), -1);
 	gs_app_set_size (app, pk_details_get_size (item));
-	gs_app_set_licence (app, pk_details_get_license (item));
+	as_app_set_project_license (app, pk_details_get_license (item), -1);
 	gs_plugin_add_app (list, app);
 out:
 	if (app != NULL)

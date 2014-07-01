@@ -83,10 +83,10 @@ apply_changes (GsAppFolderDialog *dialog)
 		folder = NULL;
 
 	for (l = priv->apps; l; l = l->next) {
-		GsApp *app = l->data;
+		AsApp *app = l->data;
 		gs_folders_set_app_folder (priv->folders,
-					   gs_app_get_id_full (app),
-					   gs_app_get_categories (app),
+					   as_app_get_id_full (app),
+					   as_app_get_categories (app),
 					   folder);
 	}
 

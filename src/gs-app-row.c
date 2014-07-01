@@ -33,7 +33,7 @@
 
 struct _GsAppRowPrivate
 {
-	GsApp		*app;
+	AsApp		*app;
 	GtkWidget	*image;
 	GtkWidget	*name_box;
 	GtkWidget	*name_label;
@@ -82,7 +82,7 @@ gs_app_row_get_description (GsAppRow *app_row)
 
 	/* convert the markdown update description into PangoMarkup */
 	if (priv->show_update &&
-	    gs_app_get_state (priv->app) == AS_APP_STATE_UPDATABLE) {
+	    as_app_get_state (priv->app) == AS_APP_STATE_UPDATABLE) {
 		tmp = gs_app_get_update_details (priv->app);
 		if (tmp != NULL && tmp[0] != '\0') {
 			markdown = gs_markdown_new (GS_MARKDOWN_OUTPUT_PANGO);
@@ -99,11 +99,11 @@ gs_app_row_get_description (GsAppRow *app_row)
 	if (gs_app_get_kind (priv->app) == GS_APP_KIND_MISSING)
 		tmp = gs_app_get_summary_missing (priv->app);
 	if (tmp == NULL || (tmp != NULL && tmp[0] == '\0'))
-		tmp = gs_app_get_description (priv->app);
+		tmp = as_app_get_description (priv->app, NULL);
 	if (tmp == NULL || (tmp != NULL && tmp[0] == '\0'))
-		tmp = gs_app_get_summary (priv->app);
+		tmp = as_app_get_comment (priv->app, NULL);
 	if (tmp == NULL || (tmp != NULL && tmp[0] == '\0'))
-		tmp = gs_app_get_name (priv->app);
+		tmp = as_app_get_name (priv->app, NULL);
 	escaped = g_markup_escape_text (tmp, -1);
 	str = g_string_new (escaped);
 out:
@@ -135,9 +135,9 @@ gs_app_row_refresh (GsAppRow *app_row)
 	g_string_free (str, TRUE);
 
 	gtk_label_set_label (GTK_LABEL (priv->name_label),
-			     gs_app_get_name (priv->app));
+			     as_app_get_name (priv->app, NULL));
 	if (priv->show_update &&
-	    gs_app_get_state (priv->app) == AS_APP_STATE_UPDATABLE) {
+	    as_app_get_state (priv->app) == AS_APP_STATE_UPDATABLE) {
 		gtk_widget_show (priv->version_label);
 		gtk_widget_hide (priv->star);
 		gtk_label_set_label (GTK_LABEL (priv->version_label),
@@ -163,7 +163,7 @@ gs_app_row_refresh (GsAppRow *app_row)
 		gtk_widget_hide (priv->folder_label);
 	} else {
 		folders = gs_folders_get ();
-		folder = gs_folders_get_app_folder (folders, gs_app_get_id_full (priv->app), gs_app_get_categories (priv->app));
+		folder = gs_folders_get_app_folder (folders, as_app_get_id_full (priv->app), as_app_get_categories (priv->app));
 		if (folder)
 			folder = gs_folders_get_folder_name (folders, folder);
 		gtk_label_set_label (GTK_LABEL (priv->folder_label), folder);
@@ -182,7 +182,7 @@ gs_app_row_refresh (GsAppRow *app_row)
 	context = gtk_widget_get_style_context (priv->button);
 	gtk_style_context_remove_class (context, "destructive-action");
 
-	switch (gs_app_get_state (app_row->priv->app)) {
+	switch (as_app_get_state (app_row->priv->app)) {
 	case AS_APP_STATE_UNAVAILABLE:
 		gtk_widget_set_visible (priv->button, TRUE);
 		/* TRANSLATORS: this is a button next to the search results that
@@ -242,8 +242,8 @@ gs_app_row_refresh (GsAppRow *app_row)
 	gtk_widget_set_visible (priv->button_box, !priv->show_update);
 
 	if (priv->selectable) {
-		if (gs_app_get_id_kind (priv->app) == AS_ID_KIND_DESKTOP ||
-		    gs_app_get_id_kind (priv->app) == AS_ID_KIND_WEB_APP)
+		if (as_app_get_id_kind (priv->app) == AS_ID_KIND_DESKTOP ||
+		    as_app_get_id_kind (priv->app) == AS_ID_KIND_WEB_APP)
 			gtk_widget_set_visible (priv->checkbox, TRUE);
 		gtk_widget_set_sensitive (priv->button, FALSE);
 	} else {
@@ -288,7 +288,7 @@ gs_app_row_unreveal (GsAppRow *app_row)
 /**
  * gs_app_row_get_app:
  **/
-GsApp *
+AsApp *
 gs_app_row_get_app (GsAppRow *app_row)
 {
 	g_return_val_if_fail (GS_IS_APP_ROW (app_row), NULL);
@@ -299,7 +299,7 @@ gs_app_row_get_app (GsAppRow *app_row)
  * gs_app_row_notify_props_changed_cb:
  **/
 static void
-gs_app_row_notify_props_changed_cb (GsApp *app,
+gs_app_row_notify_props_changed_cb (AsApp *app,
                                     GParamSpec *pspec,
                                     GsAppRow *app_row)
 {
@@ -310,7 +310,7 @@ gs_app_row_notify_props_changed_cb (GsApp *app,
  * gs_app_row_set_app:
  **/
 void
-gs_app_row_set_app (GsAppRow *app_row, GsApp *app)
+gs_app_row_set_app (GsAppRow *app_row, AsApp *app)
 {
 	g_return_if_fail (GS_IS_APP_ROW (app_row));
 	g_return_if_fail (GS_IS_APP (app));

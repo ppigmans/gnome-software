@@ -181,7 +181,7 @@ gs_plugin_add_category_apps (GsPlugin *plugin,
 	GsCategory *parent;
 	const gchar *id;
 	guint i;
-	GsApp *app;
+	AsApp *app;
 
 	if (g_strcmp0 (gs_category_get_id (category), "featured") != 0)
 		return TRUE;
@@ -211,13 +211,13 @@ gs_plugin_refine (GsPlugin *plugin,
 {
 	const gchar *id;
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	guint i;
 
 	for (i = 0; i < G_N_ELEMENTS (featured); i++) {
 		for (l = *list; l != NULL; l = l->next) {
-			app = GS_APP (l->data);
-			id = gs_app_get_id_full (app);
+			app = AS_APP (l->data);
+			id = as_app_get_id_full (app);
 			if (g_strcmp0 (id, featured[i].app) != 0)
 				continue;
 			gs_app_add_kudo (app, GS_APP_KUDO_FEATURED_RECOMMENDED);

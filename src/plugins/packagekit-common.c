@@ -95,7 +95,7 @@ gs_plugin_packagekit_add_results (GsPlugin *plugin,
 	GHashTable *installed = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *array_filtered = NULL;
-	GsApp *app;
+	AsApp *app;
 	guint i;
 	PkError *error_code = NULL;
 	PkPackage *package;

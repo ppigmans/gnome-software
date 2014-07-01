@@ -95,8 +95,8 @@ static gint
 search_sort_by_kudo_cb (gconstpointer a, gconstpointer b)
 {
 	guint pa, pb;
-	pa = gs_app_get_kudos_percentage (GS_APP (a));
-	pb = gs_app_get_kudos_percentage (GS_APP (b));
+	pa = gs_app_get_kudos_percentage (AS_APP (a));
+	pb = gs_app_get_kudos_percentage (AS_APP (b));
 	if (pa < pb)
 		return 1;
 	else if (pa > pb)
@@ -134,10 +134,10 @@ search_done_cb (GObject *source,
 
 	g_variant_builder_init (&builder, G_VARIANT_TYPE ("as"));
 	for (l = list; l != NULL; l = l->next) {
-		GsApp *app = GS_APP (l->data);
-		if (gs_app_get_state (app) != AS_APP_STATE_AVAILABLE)
+		AsApp *app = AS_APP (l->data);
+		if (as_app_get_state (app) != AS_APP_STATE_AVAILABLE)
 			continue;
-		g_variant_builder_add (&builder, "s", gs_app_get_id (app));
+		g_variant_builder_add (&builder, "s", as_app_get_id (app));
 	}
 	g_dbus_method_invocation_return_value (self->current_search->invocation, g_variant_new ("(as)", &builder));
 
@@ -221,7 +221,7 @@ handle_get_result_metas (GsShellSearchProvider2        *skeleton,
 	g_debug ("****** GetResultMetas");
 
 	for (i = 0; results[i]; i++) {
-		GsApp *app;
+		AsApp *app;
 
 		if (g_hash_table_lookup (self->metas_cache, results[i]))
 			continue;
@@ -241,14 +241,14 @@ handle_get_result_metas (GsShellSearchProvider2        *skeleton,
 		}
 
 		g_variant_builder_init (&meta, G_VARIANT_TYPE ("a{sv}"));
-		g_variant_builder_add (&meta, "{sv}", "id", g_variant_new_string (gs_app_get_id (app)));
-		g_variant_builder_add (&meta, "{sv}", "name", g_variant_new_string (gs_app_get_name (app)));
+		g_variant_builder_add (&meta, "{sv}", "id", g_variant_new_string (as_app_get_id (app)));
+		g_variant_builder_add (&meta, "{sv}", "name", g_variant_new_string (as_app_get_name (app, NULL)));
 		pixbuf = gs_app_get_pixbuf (app);
 		if (pixbuf != NULL)
 			g_variant_builder_add (&meta, "{sv}", "icon", g_icon_serialize (G_ICON (pixbuf)));
-		g_variant_builder_add (&meta, "{sv}", "description", g_variant_new_string (gs_app_get_summary (app)));
+		g_variant_builder_add (&meta, "{sv}", "description", g_variant_new_string (as_app_get_comment (app, NULL)));
 		meta_variant = g_variant_builder_end (&meta);
-		g_hash_table_insert (self->metas_cache, g_strdup (gs_app_get_id (app)), g_variant_ref_sink (meta_variant));
+		g_hash_table_insert (self->metas_cache, g_strdup (as_app_get_id (app)), g_variant_ref_sink (meta_variant));
 		g_object_unref (app);
 
 	}

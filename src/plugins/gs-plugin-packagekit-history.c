@@ -78,18 +78,18 @@ gs_plugin_destroy (GsPlugin *plugin)
  * gs_plugin_packagekit_refine_add_history:
  */
 static void
-gs_plugin_packagekit_refine_add_history (GsApp *app, GVariant *dict)
+gs_plugin_packagekit_refine_add_history (AsApp *app, GVariant *dict)
 {
 	const gchar *version;
 	gboolean ret;
-	GsApp *history;
+	AsApp *history;
 	guint64 timestamp;
 	PkInfoEnum info_enum;
 
 	/* create new history item with same ID as parent */
-	history = gs_app_new (gs_app_get_id_full (app));
+	history = gs_app_new (as_app_get_id_full (app));
 	gs_app_set_kind (history, GS_APP_KIND_PACKAGE);
-	gs_app_set_name (history, GS_APP_QUALITY_NORMAL, gs_app_get_name (app));
+	gs_app_set_name (history, GS_APP_QUALITY_NORMAL, as_app_get_name (app, NULL));
 
 	/* get the installed state */
 	ret = g_variant_lookup (dict, "info", "u", &info_enum);
@@ -160,8 +160,8 @@ gs_plugin_packagekit_refine (GsPlugin *plugin,
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GList *l;
-	GsApp *app;
-	GsApp *app_dummy;
+	AsApp *app;
+	AsApp *app_dummy;
 	guint i = 0;
 	GVariantIter iter;
 	GVariant *result = NULL;
@@ -179,7 +179,7 @@ gs_plugin_packagekit_refine (GsPlugin *plugin,
 	/* get an array of package names */
 	package_names = g_new0 (const gchar *, g_list_length (list) + 1);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		package_names[i++] = gs_app_get_source_default (app);
 	}
 
@@ -206,7 +206,7 @@ gs_plugin_packagekit_refine (GsPlugin *plugin,
 			/* just set this to something non-zero so we don't keep
 			 * trying to call GetPackageHistory */
 			for (l = list; l != NULL; l = l->next) {
-				app = GS_APP (l->data);
+				app = AS_APP (l->data);
 				gs_app_set_install_date (app, GS_APP_INSTALL_DATE_UNKNOWN);
 			}
 		} else if (g_error_matches (error_local,
@@ -216,7 +216,7 @@ gs_plugin_packagekit_refine (GsPlugin *plugin,
 				 error_local->message);
 			g_error_free (error_local);
 			for (l = list; l != NULL; l = l->next) {
-				app = GS_APP (l->data);
+				app = AS_APP (l->data);
 				gs_app_set_install_date (app, GS_APP_INSTALL_DATE_UNKNOWN);
 			}
 		} else {
@@ -229,7 +229,7 @@ gs_plugin_packagekit_refine (GsPlugin *plugin,
 	/* get any results */
 	tuple = g_variant_get_child_value (result, 0);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		ret = g_variant_lookup (tuple,
 					gs_app_get_source_default (app),
 					"@aa{sv}",
@@ -237,8 +237,8 @@ gs_plugin_packagekit_refine (GsPlugin *plugin,
 		if (!ret) {
 			/* make up a fake entry as we know this package was at
 			 * least installed at some point in time */
-			if (gs_app_get_state (app) == AS_APP_STATE_INSTALLED) {
-				app_dummy = gs_app_new (gs_app_get_id_full (app));
+			if (as_app_get_state (app) == AS_APP_STATE_INSTALLED) {
+				app_dummy = gs_app_new (as_app_get_id_full (app));
 				gs_app_set_install_date (app_dummy, GS_APP_INSTALL_DATE_UNKNOWN);
 				gs_app_set_kind (app_dummy, GS_APP_KIND_PACKAGE);
 				gs_app_set_state (app_dummy, AS_APP_STATE_INSTALLED);
@@ -282,7 +282,7 @@ gs_plugin_refine (GsPlugin *plugin,
 	gboolean ret = TRUE;
 	GList *l;
 	GList *packages = NULL;
-	GsApp *app;
+	AsApp *app;
 	GPtrArray *sources;
 
 	if ((flags & GS_PLUGIN_REFINE_FLAGS_REQUIRE_HISTORY) == 0)
@@ -290,7 +290,7 @@ gs_plugin_refine (GsPlugin *plugin,
 
 	/* add any missing history data */
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		sources = gs_app_get_sources (app);
 		if (sources->len == 0)
 			continue;

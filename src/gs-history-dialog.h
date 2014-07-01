@@ -52,7 +52,7 @@ struct _GsHistoryDialogClass
 GType		 gs_history_dialog_get_type	(void);
 GtkWidget	*gs_history_dialog_new		(void);
 void		 gs_history_dialog_set_app	(GsHistoryDialog	*dialog,
-						 GsApp			*app);
+						 AsApp			*app);
 
 #endif /* GS_HISTORY_DIALOG_H */
 

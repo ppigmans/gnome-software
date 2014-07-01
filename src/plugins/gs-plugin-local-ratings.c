@@ -161,7 +161,7 @@ gs_plugin_local_find_app (GsPlugin *plugin, const gchar *app_id)
  */
 gboolean
 gs_plugin_app_set_rating (GsPlugin *plugin,
-			  GsApp *app,
+			  AsApp *app,
 			  GCancellable *cancellable,
 			  GError **error)
 {
@@ -182,7 +182,7 @@ gs_plugin_app_set_rating (GsPlugin *plugin,
 	/* insert the entry */
 	statement = g_strdup_printf ("INSERT OR REPLACE INTO ratings (app_id, rating) "
 				     "VALUES ('%s', '%i');",
-				     gs_app_get_id (app),
+				     as_app_get_id (app),
 				     gs_app_get_rating (app));
 	rc = sqlite3_exec (plugin->priv->db, statement, NULL, NULL, &error_msg);
 	if (rc != SQLITE_OK) {
@@ -213,7 +213,7 @@ gs_plugin_refine (GsPlugin *plugin,
 	gboolean ret = TRUE;
 	gint rating;
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 
 	/* nothing to do here */
 	if ((flags & GS_PLUGIN_REFINE_FLAGS_REQUIRE_RATING) == 0)
@@ -230,12 +230,12 @@ gs_plugin_refine (GsPlugin *plugin,
 
 	/* add any missing ratings data */
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (gs_app_get_id (app) == NULL)
+		app = AS_APP (l->data);
+		if (as_app_get_id (app) == NULL)
 			continue;
 		if (gs_app_get_rating (app) != -1)
 			continue;
-		rating = gs_plugin_local_find_app (plugin, gs_app_get_id (app));
+		rating = gs_plugin_local_find_app (plugin, as_app_get_id (app));
 		if (rating != -1) {
 			gs_app_set_rating (app, rating);
 			gs_app_set_rating_confidence (app, 100);

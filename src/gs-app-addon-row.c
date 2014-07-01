@@ -30,7 +30,7 @@
 
 struct _GsAppAddonRowPrivate
 {
-	GsApp		*app;
+	AsApp		*app;
 	GtkWidget	*name_box;
 	GtkWidget	*name_label;
 	GtkWidget	*description_label;
@@ -62,9 +62,9 @@ gs_app_addon_row_get_summary (GsAppAddonRow *row)
 	if (gs_app_get_kind (priv->app) == GS_APP_KIND_MISSING)
 		tmp = gs_app_get_summary_missing (priv->app);
 	if (tmp == NULL || (tmp != NULL && tmp[0] == '\0'))
-		tmp = gs_app_get_summary (priv->app);
+		tmp = as_app_get_comment (priv->app, NULL);
 	if (tmp == NULL || (tmp != NULL && tmp[0] == '\0'))
-		tmp = gs_app_get_description (priv->app);
+		tmp = as_app_get_description (priv->app, NULL);
 
 	escaped = g_markup_escape_text (tmp, -1);
 	str = g_string_new (escaped);
@@ -89,10 +89,10 @@ gs_app_addon_row_refresh (GsAppAddonRow *row)
 	g_string_free (str, TRUE);
 
 	gtk_label_set_label (GTK_LABEL (priv->name_label),
-	                     gs_app_get_name (priv->app));
+	                     as_app_get_name (priv->app, NULL));
 
 	/* update the state label */
-	switch (gs_app_get_state (row->priv->app)) {
+	switch (as_app_get_state (row->priv->app)) {
 	case AS_APP_STATE_QUEUED_FOR_INSTALL:
 		gtk_widget_set_visible (priv->label, TRUE);
 		gtk_label_set_label (GTK_LABEL (priv->label), _("Pending"));
@@ -116,7 +116,7 @@ gs_app_addon_row_refresh (GsAppAddonRow *row)
 	}
 
 	/* update the checkbox */
-	switch (gs_app_get_state (row->priv->app)) {
+	switch (as_app_get_state (row->priv->app)) {
 	case AS_APP_STATE_QUEUED_FOR_INSTALL:
 		gtk_widget_set_sensitive (priv->checkbox, TRUE);
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (row->priv->checkbox), TRUE);
@@ -146,7 +146,7 @@ gs_app_addon_row_refresh (GsAppAddonRow *row)
 	}
 }
 
-GsApp *
+AsApp *
 gs_app_addon_row_get_addon (GsAppAddonRow *row)
 {
 	g_return_val_if_fail (GS_IS_APP_ADDON_ROW (row), NULL);
@@ -154,7 +154,7 @@ gs_app_addon_row_get_addon (GsAppAddonRow *row)
 }
 
 static void
-gs_app_addon_row_notify_props_changed_cb (GsApp *app,
+gs_app_addon_row_notify_props_changed_cb (AsApp *app,
                                           GParamSpec *pspec,
                                           GsAppAddonRow *row)
 {
@@ -162,7 +162,7 @@ gs_app_addon_row_notify_props_changed_cb (GsApp *app,
 }
 
 void
-gs_app_addon_row_set_addon (GsAppAddonRow *row, GsApp *app)
+gs_app_addon_row_set_addon (GsAppAddonRow *row, AsApp *app)
 {
 	g_return_if_fail (GS_IS_APP_ADDON_ROW (row));
 	g_return_if_fail (GS_IS_APP (app));

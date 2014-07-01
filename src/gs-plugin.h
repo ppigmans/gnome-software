@@ -26,6 +26,7 @@
 #include <gmodule.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
+#include <appstream-glib.h>
 
 #include "gs-app.h"
 #include "gs-category.h"
@@ -49,13 +50,13 @@ typedef enum {
 } GsPluginStatus;
 
 typedef void (*GsPluginStatusUpdate)	(GsPlugin	*plugin,
-					 GsApp		*app,
+					 AsApp		*app,
 					 GsPluginStatus	 status,
 					 gpointer	 user_data);
 typedef void (*GsPluginUpdatesChanged)	(GsPlugin	*plugin,
 					 gpointer	 user_data);
 
-typedef gboolean (*GsPluginListFilter)	(GsApp		*app,
+typedef gboolean (*GsPluginListFilter)	(AsApp		*app,
 					 gpointer	 user_data);
 
 struct GsPlugin {
@@ -128,7 +129,7 @@ typedef gboolean	 (*GsPluginResultsFunc)		(GsPlugin	*plugin,
 							 GCancellable	*cancellable,
 							 GError		**error);
 typedef gboolean	 (*GsPluginActionFunc)		(GsPlugin	*plugin,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GCancellable	*cancellable,
 							 GError		**error);
 typedef gboolean	 (*GsPluginRefineFunc)		(GsPlugin	*plugin,
@@ -155,7 +156,7 @@ void		 gs_plugin_set_enabled			(GsPlugin	*plugin,
 gboolean	 gs_plugin_check_distro_id		(GsPlugin	*plugin,
 							 const gchar	*distro_id);
 void		 gs_plugin_add_app			(GList		**list,
-							 GsApp		*app);
+							 AsApp		*app);
 void		 gs_plugin_list_free			(GList		*list);
 GList		*gs_plugin_list_copy			(GList		*list);
 void		 gs_plugin_list_filter			(GList		**list,
@@ -165,7 +166,7 @@ void		 gs_plugin_list_filter_duplicates	(GList		**list);
 void		 gs_plugin_list_randomize		(GList		**list);
 
 void		 gs_plugin_status_update		(GsPlugin	*plugin,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GsPluginStatus	 status);
 void		 gs_plugin_updates_changed		(GsPlugin	*plugin);
 const gchar	*gs_plugin_status_to_string		(GsPluginStatus	 status);
@@ -214,19 +215,19 @@ gboolean	 gs_plugin_refine			(GsPlugin	*plugin,
 							 GCancellable	*cancellable,
 							 GError		**error);
 gboolean	 gs_plugin_app_install			(GsPlugin	*plugin,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GCancellable	*cancellable,
 							 GError		**error);
 gboolean	 gs_plugin_app_update			(GsPlugin	*plugin,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GCancellable	*cancellable,
 							 GError		**error);
 gboolean	 gs_plugin_app_remove			(GsPlugin	*plugin,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GCancellable	*cancellable,
 							 GError		**error);
 gboolean	 gs_plugin_app_set_rating		(GsPlugin	*plugin,
-							 GsApp		*app,
+							 AsApp		*app,
 							 GCancellable	*cancellable,
 							 GError		**error);
 gboolean	 gs_plugin_refresh			(GsPlugin	*plugin,

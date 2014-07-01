@@ -179,7 +179,7 @@ gs_plugin_app_set_usage_pkg (GsPlugin *plugin,
  */
 static gboolean
 gs_plugin_app_set_usage_app (GsPlugin *plugin,
-			     GsApp *app,
+			     AsApp *app,
 			     gboolean is_install,
 			     GError **error)
 {
@@ -217,7 +217,7 @@ out:
  */
 gboolean
 gs_plugin_app_install (GsPlugin *plugin,
-		       GsApp *app,
+		       AsApp *app,
 		       GCancellable *cancellable,
 		       GError **error)
 {
@@ -229,7 +229,7 @@ gs_plugin_app_install (GsPlugin *plugin,
  */
 gboolean
 gs_plugin_app_remove (GsPlugin *plugin,
-		      GsApp *app,
+		      AsApp *app,
 		      GCancellable *cancellable,
 		      GError **error)
 {

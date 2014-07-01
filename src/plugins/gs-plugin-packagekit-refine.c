@@ -121,7 +121,7 @@ gs_plugin_packagekit_progress_cb (PkProgress *progress,
  **/
 static void
 gs_plugin_packagekit_set_origin (GsPlugin *plugin,
-				 GsApp *app,
+				 AsApp *app,
 				 const gchar *id)
 {
 	const gchar *name;
@@ -138,7 +138,7 @@ gs_plugin_packagekit_set_origin (GsPlugin *plugin,
 static void
 gs_plugin_packagekit_resolve_packages_app (GsPlugin *plugin,
 					   GPtrArray *packages,
-					   GsApp *app)
+					   AsApp *app)
 {
 	GPtrArray *sources;
 	PkPackage *package;
@@ -195,12 +195,12 @@ gs_plugin_packagekit_resolve_packages_app (GsPlugin *plugin,
 	/* if *all* the source packages for the app are installed then the
 	 * application is considered completely installed */
 	if (number_installed == sources->len && number_available == 0) {
-		if (gs_app_get_state (app) == AS_APP_STATE_UNKNOWN)
+		if (as_app_get_state (app) == AS_APP_STATE_UNKNOWN)
 			gs_app_set_state (app, AS_APP_STATE_INSTALLED);
 	} else if (number_installed + number_available == sources->len) {
 		/* if all the source packages are installed and all the rest
 		 * of the packages are available then the app is available */
-		if (gs_app_get_state (app) == AS_APP_STATE_UNKNOWN)
+		if (as_app_get_state (app) == AS_APP_STATE_UNKNOWN)
 			gs_app_set_state (app, AS_APP_STATE_AVAILABLE);
 	} else if (number_installed + number_available > sources->len) {
 		/* we have more packages returned than source packages */
@@ -230,7 +230,7 @@ gs_plugin_packagekit_resolve_packages (GsPlugin *plugin,
 	GPtrArray *package_ids = NULL;
 	GPtrArray *packages = NULL;
 	GPtrArray *sources;
-	GsApp *app;
+	AsApp *app;
 	PkError *error_code = NULL;
 	PkResults *results = NULL;
 	const gchar *pkgname;
@@ -239,7 +239,7 @@ gs_plugin_packagekit_resolve_packages (GsPlugin *plugin,
 
 	package_ids = g_ptr_array_new_with_free_func (g_free);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		sources = gs_app_get_sources (app);
 		for (i = 0; i < sources->len; i++) {
 			pkgname = g_ptr_array_index (sources, i);
@@ -276,7 +276,7 @@ gs_plugin_packagekit_resolve_packages (GsPlugin *plugin,
 	/* get results */
 	packages = pk_results_get_package_array (results);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		gs_plugin_packagekit_resolve_packages_app (plugin, packages, app);
 	}
 out:
@@ -295,7 +295,7 @@ out:
 
 static gboolean
 gs_plugin_packagekit_refine_from_desktop (GsPlugin *plugin,
-					  GsApp	 *app,
+					  AsApp	 *app,
 					  const gchar *filename,
 					  GCancellable *cancellable,
 					  GError **error)
@@ -342,7 +342,7 @@ gs_plugin_packagekit_refine_from_desktop (GsPlugin *plugin,
 		gs_app_set_management_plugin (app, "PackageKit");
 	} else {
 		g_warning ("Failed to find one package for %s, %s, [%d]",
-			   gs_app_get_id (app), filename, packages->len);
+			   as_app_get_id (app), filename, packages->len);
 	}
 out:
 	if (packages != NULL)
@@ -370,7 +370,7 @@ gs_plugin_packagekit_refine_updatedetails (GsPlugin *plugin,
 	const gchar **package_ids;
 	GList *l;
 	GPtrArray *array = NULL;
-	GsApp *app;
+	AsApp *app;
 	guint i = 0;
 	guint size;
 	PkResults *results = NULL;
@@ -379,7 +379,7 @@ gs_plugin_packagekit_refine_updatedetails (GsPlugin *plugin,
 	size = g_list_length (list);
 	package_ids = g_new0 (const gchar *, size + 1);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		package_id = gs_app_get_source_id_default (app);
 		package_ids[i++] = package_id;
 	}
@@ -398,7 +398,7 @@ gs_plugin_packagekit_refine_updatedetails (GsPlugin *plugin,
 	/* set the update details for the update */
 	array = pk_results_get_update_detail_array (results);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		package_id = gs_app_get_source_id_default (app);
 		for (i = 0; i < array->len; i++) {
 			/* right package? */
@@ -462,7 +462,7 @@ gs_pk_compare_ids (const gchar *package_id1, const gchar *package_id2)
 static void
 gs_plugin_packagekit_refine_details_app (GsPlugin *plugin,
 					 GPtrArray *array,
-					 GsApp *app)
+					 AsApp *app)
 {
 	GPtrArray *source_ids;
 	PkDetails *details;
@@ -482,12 +482,12 @@ gs_plugin_packagekit_refine_details_app (GsPlugin *plugin,
 						pk_details_get_package_id (details)) != 0) {
 				continue;
 			}
-			if (gs_app_get_licence (app) == NULL)
-				gs_app_set_licence (app, pk_details_get_license (details));
-			if (gs_app_get_url (app, GS_APP_URL_KIND_HOMEPAGE) == NULL) {
-				gs_app_set_url (app,
-						GS_APP_URL_KIND_HOMEPAGE,
-						pk_details_get_url (details));
+			if (as_app_get_project_license (app) == NULL)
+				as_app_set_project_license (app, pk_details_get_license (details), -1);
+			if (as_app_get_url_item (app, AS_URL_KIND_HOMEPAGE) == NULL) {
+				as_app_add_url (app,
+						AS_URL_KIND_HOMEPAGE,
+						pk_details_get_url (details), -1);
 			}
 			size += pk_details_get_size (details);
 			desc = gs_pk_format_desc (pk_details_get_description (details));
@@ -522,7 +522,7 @@ gs_plugin_packagekit_refine_details (GsPlugin *plugin,
 	GPtrArray *array = NULL;
 	GPtrArray *package_ids;
 	GPtrArray *source_ids;
-	GsApp *app;
+	AsApp *app;
 	PkResults *results = NULL;
 	const gchar *package_id;
 	gboolean ret = TRUE;
@@ -530,7 +530,7 @@ gs_plugin_packagekit_refine_details (GsPlugin *plugin,
 
 	package_ids = g_ptr_array_new_with_free_func (g_free);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		source_ids = gs_app_get_source_ids (app);
 		for (i = 0; i < source_ids->len; i++) {
 			package_id = g_ptr_array_index (source_ids, i);
@@ -553,7 +553,7 @@ gs_plugin_packagekit_refine_details (GsPlugin *plugin,
 	/* set the update details for the update */
 	array = pk_results_get_details_array (results);
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		gs_plugin_packagekit_refine_details_app (plugin, array, app);
 	}
 out:
@@ -569,15 +569,15 @@ out:
  * gs_plugin_refine_app_needs_details:
  */
 static gboolean
-gs_plugin_refine_app_needs_details (GsPlugin *plugin, GsApp *app)
+gs_plugin_refine_app_needs_details (GsPlugin *plugin, AsApp *app)
 {
-	if (gs_app_get_licence (app) == NULL)
+	if (as_app_get_project_license (app) == NULL)
 		return TRUE;
-	if (gs_app_get_url (app, GS_APP_URL_KIND_HOMEPAGE) == NULL)
+	if (as_app_get_url_item (app, AS_URL_KIND_HOMEPAGE) == NULL)
 		return TRUE;
 	if (gs_app_get_size (app) == GS_APP_SIZE_UNKNOWN)
 		return TRUE;
-	if (gs_app_get_description (app) == NULL && plugin->use_pkg_descriptions)
+	if (as_app_get_description (app, NULL) == NULL && plugin->use_pkg_descriptions)
 		return TRUE;
 	return FALSE;
 }
@@ -593,13 +593,13 @@ gs_plugin_refine_require_details (GsPlugin *plugin,
 {
 	GList *l;
 	GList *list_tmp = NULL;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret = TRUE;
 
 	gs_profile_start (plugin->profile, "packagekit-refine[source->licence]");
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (gs_app_get_id_kind (app) == AS_ID_KIND_WEB_APP)
+		app = AS_APP (l->data);
+		if (as_app_get_id_kind (app) == AS_ID_KIND_WEB_APP)
 			continue;
 		if (gs_app_get_source_id_default (app) == NULL)
 			continue;
@@ -666,7 +666,7 @@ out:
  * gs_plugin_refine_requires_version:
  */
 static gboolean
-gs_plugin_refine_requires_version (GsApp *app, GsPluginRefineFlags flags)
+gs_plugin_refine_requires_version (AsApp *app, GsPluginRefineFlags flags)
 {
 	const gchar *tmp;
 	tmp = gs_app_get_version (app);
@@ -679,7 +679,7 @@ gs_plugin_refine_requires_version (GsApp *app, GsPluginRefineFlags flags)
  * gs_plugin_refine_requires_update_details:
  */
 static gboolean
-gs_plugin_refine_requires_update_details (GsApp *app, GsPluginRefineFlags flags)
+gs_plugin_refine_requires_update_details (AsApp *app, GsPluginRefineFlags flags)
 {
 	const gchar *tmp;
 	tmp = gs_app_get_update_details (app);
@@ -692,7 +692,7 @@ gs_plugin_refine_requires_update_details (GsApp *app, GsPluginRefineFlags flags)
  * gs_plugin_refine_requires_package_id:
  */
 static gboolean
-gs_plugin_refine_requires_package_id (GsApp *app, GsPluginRefineFlags flags)
+gs_plugin_refine_requires_package_id (AsApp *app, GsPluginRefineFlags flags)
 {
 	const gchar *tmp;
 	tmp = gs_app_get_source_id_default (app);
@@ -731,7 +731,7 @@ gs_plugin_refine (GsPlugin *plugin,
 	GList *resolve_all = NULL;
 	GList *updatedetails_all = NULL;
 	GPtrArray *sources;
-	GsApp *app;
+	AsApp *app;
 	const gchar *tmp;
 	gboolean ret = TRUE;
 
@@ -748,15 +748,15 @@ gs_plugin_refine (GsPlugin *plugin,
 	/* can we resolve in one go? */
 	gs_profile_start (plugin->profile, "packagekit-refine[name->id]");
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		if (gs_app_get_source_id_default (app) != NULL)
 			continue;
-		if (gs_app_get_id_kind (app) == AS_ID_KIND_WEB_APP)
+		if (as_app_get_id_kind (app) == AS_ID_KIND_WEB_APP)
 			continue;
 		sources = gs_app_get_sources (app);
 		if (sources->len == 0)
 			continue;
-		if (gs_app_get_state (app) == AS_APP_STATE_UNKNOWN ||
+		if (as_app_get_state (app) == AS_APP_STATE_UNKNOWN ||
 		    gs_plugin_refine_requires_package_id (app, flags) ||
 		    gs_plugin_refine_requires_version (app, flags)) {
 			resolve_all = g_list_prepend (resolve_all, app);
@@ -777,10 +777,10 @@ gs_plugin_refine (GsPlugin *plugin,
 	for (l = *list; l != NULL; l = l->next) {
 		if ((flags & GS_PLUGIN_REFINE_FLAGS_REQUIRE_SETUP_ACTION) == 0)
 			continue;
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		if (gs_app_get_source_id_default (app) != NULL)
 			continue;
-		tmp = gs_app_get_metadata_item (app, "DataDir::desktop-filename");
+		tmp = as_app_get_metadata_item (app, "DataDir::desktop-filename");
 		if (tmp == NULL)
 			continue;
 		ret = gs_plugin_packagekit_refine_from_desktop (plugin,
@@ -796,8 +796,8 @@ gs_plugin_refine (GsPlugin *plugin,
 	/* any update details missing? */
 	gs_profile_start (plugin->profile, "packagekit-refine[id->update-details]");
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (gs_app_get_state (app) != AS_APP_STATE_UPDATABLE)
+		app = AS_APP (l->data);
+		if (as_app_get_state (app) != AS_APP_STATE_UPDATABLE)
 			continue;
 		if (gs_plugin_refine_requires_update_details (app, flags))
 			updatedetails_all = g_list_prepend (updatedetails_all, app);

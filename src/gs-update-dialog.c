@@ -78,7 +78,7 @@ back_entry_free (BackEntry *entry)
 }
 
 static void
-set_updates_description_ui (GsUpdateDialog *dialog, GsApp *app)
+set_updates_description_ui (GsUpdateDialog *dialog, AsApp *app)
 {
 	GsUpdateDialogPrivate *priv = gs_update_dialog_get_instance_private (dialog);
 	GsAppKind kind;
@@ -90,7 +90,7 @@ set_updates_description_ui (GsUpdateDialog *dialog, GsApp *app)
 	/* set window title */
 	kind = gs_app_get_kind (app);
 	if (kind == GS_APP_KIND_OS_UPDATE) {
-		gtk_window_set_title (GTK_WINDOW (dialog), gs_app_get_name (app));
+		gtk_window_set_title (GTK_WINDOW (dialog), as_app_get_name (app, NULL));
 	} else {
 		tmp = g_strdup_printf ("%s %s",
 		                       gs_app_get_source_default (app),
@@ -117,8 +117,8 @@ set_updates_description_ui (GsUpdateDialog *dialog, GsApp *app)
 	gtk_widget_set_visible (priv->box_header, kind == GS_APP_KIND_NORMAL || kind == GS_APP_KIND_SYSTEM);
 	gtk_label_set_markup (GTK_LABEL (priv->label_details), update_desc);
 	gtk_image_set_from_pixbuf (GTK_IMAGE (priv->image_icon), gs_app_get_pixbuf (app));
-	gtk_label_set_label (GTK_LABEL (priv->label_name), gs_app_get_name (app));
-	gtk_label_set_label (GTK_LABEL (priv->label_summary), gs_app_get_summary (app));
+	gtk_label_set_label (GTK_LABEL (priv->label_name), as_app_get_name (app, NULL));
+	gtk_label_set_label (GTK_LABEL (priv->label_summary), as_app_get_comment (app, NULL));
 	g_free (update_desc);
 
 	/* show the back button if needed */
@@ -130,9 +130,9 @@ row_activated_cb (GtkListBox *list_box,
                   GtkListBoxRow *row,
                   GsUpdateDialog *dialog)
 {
-	GsApp *app;
+	AsApp *app;
 
-	app = GS_APP (g_object_get_data (G_OBJECT (gtk_bin_get_child (GTK_BIN (row))), "app"));
+	app = AS_APP (g_object_get_data (G_OBJECT (gtk_bin_get_child (GTK_BIN (row))), "app"));
 
 	/* save the current stack state for the back button */
 	save_back_entry (dialog);
@@ -146,7 +146,7 @@ installed_updates_row_activated_cb (GtkListBox *list_box,
                                     GtkListBoxRow *row,
                                     GsUpdateDialog *dialog)
 {
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_app_row_get_app (GS_APP_ROW (row));
 
@@ -190,15 +190,15 @@ gs_update_dialog_show_installed_updates (GsUpdateDialog *dialog, GList *installe
 	gs_container_remove_all (GTK_CONTAINER (priv->list_box_installed_updates));
 	for (l = installed_updates; l != NULL; l = l->next) {
 		gs_update_list_add_app (GS_UPDATE_LIST (priv->list_box_installed_updates),
-		                        GS_APP (l->data));
+		                        AS_APP (l->data));
 	}
 }
 
 void
-gs_update_dialog_show_update_details (GsUpdateDialog *dialog, GsApp *app)
+gs_update_dialog_show_update_details (GsUpdateDialog *dialog, AsApp *app)
 {
 	GsUpdateDialogPrivate *priv = gs_update_dialog_get_instance_private (dialog);
-	GsApp *app_related;
+	AsApp *app_related;
 	GsAppKind kind;
 	const gchar *sort;
 

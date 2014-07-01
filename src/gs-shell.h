@@ -75,7 +75,7 @@ GsShellMode	 gs_shell_get_mode		(GsShell	*shell);
 void		 gs_shell_show_installed_updates(GsShell	*shell);
 void		 gs_shell_show_sources		(GsShell	*shell);
 void		 gs_shell_show_app		(GsShell	*shell,
-						 GsApp		*app);
+						 AsApp		*app);
 void		 gs_shell_show_category		(GsShell	*shell,
 						 GsCategory	*category);
 void		 gs_shell_show_search		(GsShell	*shell,

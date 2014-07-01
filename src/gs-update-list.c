@@ -40,7 +40,7 @@ G_DEFINE_TYPE_WITH_PRIVATE (GsUpdateList, gs_update_list, GTK_TYPE_LIST_BOX)
 
 void
 gs_update_list_add_app (GsUpdateList *update_list,
-                        GsApp        *app)
+                        AsApp        *app)
 {
 	GsUpdateListPrivate *priv = gs_update_list_get_instance_private (update_list);
 	GtkWidget *app_row;
@@ -56,10 +56,10 @@ gs_update_list_add_app (GsUpdateList *update_list,
 }
 
 static gboolean
-is_addon_id_kind (GsApp *app)
+is_addon_id_kind (AsApp *app)
 {
 	AsIdKind id_kind;
-	id_kind = gs_app_get_id_kind (app);
+	id_kind = as_app_get_id_kind (app);
 	if (id_kind == AS_ID_KIND_DESKTOP)
 		return FALSE;
 	if (id_kind == AS_ID_KIND_WEB_APP)
@@ -98,7 +98,7 @@ list_header_func (GtkListBoxRow *row,
 }
 
 static gchar *
-get_app_sort_key (GsApp *app)
+get_app_sort_key (AsApp *app)
 {
 	GString *key;
 
@@ -115,7 +115,7 @@ get_app_sort_key (GsApp *app)
 	}
 
 	/* sort desktop files, then addons */
-	switch (gs_app_get_id_kind (app)) {
+	switch (as_app_get_id_kind (app)) {
 	case AS_ID_KIND_DESKTOP:
 		g_string_append (key, "1:");
 		break;
@@ -129,7 +129,7 @@ get_app_sort_key (GsApp *app)
 	                        G_MAXUINT64 - gs_app_get_install_date (app));
 
 	/* finally, sort by short name */
-	g_string_append (key, gs_app_get_name (app));
+	g_string_append (key, as_app_get_name (app, NULL));
 	return g_string_free (key, FALSE);
 }
 
@@ -138,8 +138,8 @@ list_sort_func (GtkListBoxRow *a,
                 GtkListBoxRow *b,
                 gpointer user_data)
 {
-	GsApp *a1 = gs_app_row_get_app (GS_APP_ROW (a));
-	GsApp *a2 = gs_app_row_get_app (GS_APP_ROW (b));
+	AsApp *a1 = gs_app_row_get_app (GS_APP_ROW (a));
+	AsApp *a2 = gs_app_row_get_app (GS_APP_ROW (b));
 	gchar *key1 = get_app_sort_key (a1);
 	gchar *key2 = get_app_sort_key (a2);
 	gint retval;

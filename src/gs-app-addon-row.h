@@ -58,9 +58,9 @@ void		 gs_app_addon_row_refresh		(GsAppAddonRow	*row);
 void		 gs_app_addon_row_set_selected		(GsAppAddonRow	*row,
 							 gboolean        selected);
 gboolean	 gs_app_addon_row_get_selected		(GsAppAddonRow	*row);
-GsApp		*gs_app_addon_row_get_addon		(GsAppAddonRow	*row);
+AsApp		*gs_app_addon_row_get_addon		(GsAppAddonRow	*row);
 void		 gs_app_addon_row_set_addon		(GsAppAddonRow	*row,
-							 GsApp		*app);
+							 AsApp		*app);
 
 G_END_DECLS
 

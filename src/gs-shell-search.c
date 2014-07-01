@@ -56,14 +56,14 @@ gs_shell_search_app_row_activated_cb (GtkListBox *list_box,
                                       GtkListBoxRow *row,
                                       GsShellSearch *shell_search)
 {
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_app_row_get_app (GS_APP_ROW (row));
 	gs_shell_show_app (shell_search->priv->shell, app);
 }
 
 typedef struct {
-	GsApp			*app;
+	AsApp			*app;
 	GsShellSearch		*shell_search;
 } GsShellSearchHelper;
 
@@ -82,7 +82,7 @@ gs_shell_search_app_installed_cb (GObject *source,
 						  &error);
 	if (!ret) {
 		g_warning ("failed to install %s: %s",
-			   gs_app_get_id (helper->app),
+			   as_app_get_id (helper->app),
 			   error->message);
 		gs_app_notify_failed_modal (helper->shell_search->priv->builder,
 					    helper->app,
@@ -133,7 +133,7 @@ gs_shell_search_app_removed_cb (GObject *source,
  * gs_shell_search_app_remove:
  **/
 static void
-gs_shell_search_app_remove (GsShellSearch *shell_search, GsApp *app)
+gs_shell_search_app_remove (GsShellSearch *shell_search, AsApp *app)
 {
 	GsShellSearchPrivate *priv = shell_search->priv;
 	GString *markup;
@@ -147,7 +147,7 @@ gs_shell_search_app_remove (GsShellSearch *shell_search, GsApp *app)
 				/* TRANSLATORS: this is a prompt message, and
 				 * '%s' is an application summary, e.g. 'GNOME Clocks' */
 				_("Are you sure you want to remove %s?"),
-				gs_app_get_name (app));
+				as_app_get_name (app, NULL));
 	g_string_prepend (markup, "<b>");
 	g_string_append (markup, "</b>");
 	dialog = gtk_message_dialog_new (window,
@@ -159,13 +159,13 @@ gs_shell_search_app_remove (GsShellSearch *shell_search, GsApp *app)
 	gtk_message_dialog_format_secondary_markup (GTK_MESSAGE_DIALOG (dialog),
 						    /* TRANSLATORS: longer dialog text */
 						    _("%s will be removed, and you will have to install it to use it again."),
-						    gs_app_get_name (app));
+						    as_app_get_name (app, NULL));
 	/* TRANSLATORS: this is button text to remove the application */
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("Remove"), GTK_RESPONSE_OK);
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (response == GTK_RESPONSE_OK) {
 		GsShellSearchHelper *helper;
-		g_debug ("remove %s", gs_app_get_id (app));
+		g_debug ("remove %s", as_app_get_id (app));
 		helper = g_new0 (GsShellSearchHelper, 1);
 		helper->app = g_object_ref (app);
 		helper->shell_search = g_object_ref (shell_search);
@@ -184,7 +184,7 @@ gs_shell_search_app_remove (GsShellSearch *shell_search, GsApp *app)
  * gs_shell_search_app_install:
  **/
 static void
-gs_shell_search_app_install (GsShellSearch *shell_search, GsApp *app)
+gs_shell_search_app_install (GsShellSearch *shell_search, AsApp *app)
 {
 	GsShellSearchPrivate *priv = shell_search->priv;
 	GsShellSearchHelper *helper;
@@ -203,13 +203,13 @@ gs_shell_search_app_install (GsShellSearch *shell_search, GsApp *app)
  * gs_shell_search_show_missing_url:
  **/
 static void
-gs_shell_search_show_missing_url (GsApp *app)
+gs_shell_search_show_missing_url (AsApp *app)
 {
 	GError *error = NULL;
 	const gchar *url;
 	gboolean ret;
 
-	url = gs_app_get_url (app, GS_APP_URL_KIND_MISSING);
+	url = as_app_get_url_item (app, AS_URL_KIND_MISSING);
 	ret = gtk_show_uri (NULL, url, GDK_CURRENT_TIME, &error);
 	if (!ret) {
 		g_warning ("spawn of '%s' failed", url);
@@ -224,13 +224,13 @@ static void
 gs_shell_search_app_row_clicked_cb (GsAppRow *app_row,
                                     GsShellSearch *shell_search)
 {
-	GsApp *app;
+	AsApp *app;
 	app = gs_app_row_get_app (app_row);
-	if (gs_app_get_state (app) == AS_APP_STATE_AVAILABLE)
+	if (as_app_get_state (app) == AS_APP_STATE_AVAILABLE)
 		gs_shell_search_app_install (shell_search, app);
-	else if (gs_app_get_state (app) == AS_APP_STATE_INSTALLED)
+	else if (as_app_get_state (app) == AS_APP_STATE_INSTALLED)
 		gs_shell_search_app_remove (shell_search, app);
-	else if (gs_app_get_state (app) == AS_APP_STATE_UNAVAILABLE)
+	else if (as_app_get_state (app) == AS_APP_STATE_UNAVAILABLE)
 		gs_shell_search_show_missing_url (app);
 }
 
@@ -245,7 +245,7 @@ gs_shell_search_get_search_cb (GObject *source_object,
 	GError *error = NULL;
 	GList *l;
 	GList *list;
-	GsApp *app;
+	AsApp *app;
 	GsShellSearch *shell_search = GS_SHELL_SEARCH (user_data);
 	GsShellSearchPrivate *priv = shell_search->priv;
 	GsPluginLoader *plugin_loader = GS_PLUGIN_LOADER (source_object);
@@ -269,7 +269,7 @@ gs_shell_search_get_search_cb (GObject *source_object,
 	}
 	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack_search), "results");
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		app_row = gs_app_row_new ();
 		g_signal_connect (app_row, "button-clicked",
 				  G_CALLBACK (gs_shell_search_app_row_clicked_cb),
@@ -350,7 +350,7 @@ gs_shell_search_refresh (GsShellSearch *shell_search, const gchar *value, gboole
  * 5. Name
  **/
 static gchar *
-gs_shell_search_get_app_sort_key (GsApp *app)
+gs_shell_search_get_app_sort_key (AsApp *app)
 {
 	GPtrArray *ss;
 	GString *key;
@@ -371,7 +371,7 @@ gs_shell_search_get_app_sort_key (GsApp *app)
 	}
 
 	/* artificially cut the rating of applications with no description */
-	desc = gs_app_get_description (app);
+	desc = as_app_get_description (app, NULL);
 	g_string_append_printf (key, "%c:", desc != NULL ? '2' : '1');
 
 	/* sort by rating */
@@ -383,7 +383,7 @@ gs_shell_search_get_app_sort_key (GsApp *app)
 				desc != NULL ? strlen (desc) : 0);
 
 	/* sort by number of screenshots */
-	ss = gs_app_get_screenshots (app);
+	ss = as_app_get_screenshots (app);
 	g_string_append_printf (key, "%02i:", ss->len);
 
 	/* sort by install date */
@@ -391,7 +391,7 @@ gs_shell_search_get_app_sort_key (GsApp *app)
 				G_MAXUINT64 - gs_app_get_install_date (app));
 
 	/* finally, sort by short name */
-	g_string_append (key, gs_app_get_name (app));
+	g_string_append (key, as_app_get_name (app, NULL));
 
 	return g_string_free (key, FALSE);
 }
@@ -404,8 +404,8 @@ gs_shell_search_sort_func (GtkListBoxRow *a,
 			   GtkListBoxRow *b,
 			   gpointer user_data)
 {
-	GsApp *a1 = gs_app_row_get_app (GS_APP_ROW (a));
-	GsApp *a2 = gs_app_row_get_app (GS_APP_ROW (b));
+	AsApp *a1 = gs_app_row_get_app (GS_APP_ROW (a));
+	AsApp *a2 = gs_app_row_get_app (GS_APP_ROW (b));
 	gchar *key1 = gs_shell_search_get_app_sort_key (a1);
 	gchar *key2 = gs_shell_search_get_app_sort_key (a2);
 	gint retval;

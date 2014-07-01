@@ -104,7 +104,7 @@ gs_plugin_add_popular (GsPlugin *plugin,
 		       GCancellable *cancellable,
 		       GError **error)
 {
-	GsApp *app;
+	AsApp *app;
 	gboolean ret = TRUE;
 	gchar **apps = NULL;
 	guint i;
@@ -148,7 +148,7 @@ gs_plugin_refine (GsPlugin *plugin,
 		  GError **error)
 {
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret = TRUE;
 	gchar **apps = NULL;
 	gchar **pkgs = NULL;
@@ -167,9 +167,9 @@ gs_plugin_refine (GsPlugin *plugin,
 					 GS_MODULESET_MODULE_KIND_APPLICATION,
 					 "system");
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		for (i = 0; apps[i] != NULL; i++) {
-			if (g_strcmp0 (apps[i], gs_app_get_id_full (app)) == 0) {
+			if (g_strcmp0 (apps[i], as_app_get_id_full (app)) == 0) {
 				gs_app_set_kind (app, GS_APP_KIND_SYSTEM);
 				break;
 			}
@@ -181,7 +181,7 @@ gs_plugin_refine (GsPlugin *plugin,
 					 GS_MODULESET_MODULE_KIND_PACKAGE,
 					 "core");
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		for (i = 0; pkgs[i] != NULL; i++) {
 			if (g_strcmp0 (pkgs[i], gs_app_get_source_default (app)) == 0) {
 				gs_app_set_kind (app, GS_APP_KIND_CORE);

@@ -53,10 +53,10 @@ struct _GsFeatureTileClass
 };
 
 GType		 gs_feature_tile_get_type		(void);
-GtkWidget	*gs_feature_tile_new			(GsApp		*app);
-GsApp		*gs_feature_tile_get_app		(GsFeatureTile	*tile);
+GtkWidget	*gs_feature_tile_new			(AsApp		*app);
+AsApp		*gs_feature_tile_get_app		(GsFeatureTile	*tile);
 void		 gs_feature_tile_set_app		(GsFeatureTile	*tile,
-							 GsApp		*app);
+							 AsApp		*app);
 
 G_END_DECLS
 

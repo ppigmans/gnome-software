@@ -83,7 +83,7 @@ gs_plugin_destroy (GsPlugin *plugin)
 static gboolean
 gs_plugin_add_installed_file (GsPlugin *plugin,
 			      const gchar *filename,
-			      GsApp **app,
+			      AsApp **app,
 			      GError **error)
 {
 	GKeyFile *kf;
@@ -148,13 +148,13 @@ gs_plugin_add_installed_file (GsPlugin *plugin,
 	gs_app_set_name (*app, GS_APP_QUALITY_NORMAL, name);
 	gs_app_set_summary (*app, GS_APP_QUALITY_NORMAL, comment);
 	/* TRANSLATORS: this is the licence of the web-app */
-	gs_app_set_licence (*app, _("Proprietary"));
+	as_app_set_project_license (*app, _("Proprietary"), -1);
 	gs_app_set_state (*app, no_display ? AS_APP_STATE_AVAILABLE :
 					     AS_APP_STATE_INSTALLED);
 	gs_app_set_kind (*app, GS_APP_KIND_NORMAL);
-	gs_app_set_id_kind (*app, AS_ID_KIND_WEB_APP);
+	as_app_set_id_kind (*app, AS_ID_KIND_WEB_APP);
 	gs_app_add_source_id (*app, path);
-	gs_app_set_icon (*app, icon);
+	as_app_set_icon (*app, icon, -1);
 	ret = gs_app_load_icon (*app, error);
 	if (!ret)
 		goto out;
@@ -174,7 +174,7 @@ static gboolean
 gs_plugin_epiphany_load_db (GsPlugin *plugin, GError **error)
 {
 	GDir *dir;
-	GsApp *app = NULL;
+	AsApp *app = NULL;
 	const gchar *filename;
 	gboolean ret = TRUE;
 	gchar *path;
@@ -220,7 +220,7 @@ gs_plugin_add_installed (GsPlugin *plugin,
 			 GError **error)
 {
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret = TRUE;
 
 	/* already loaded */
@@ -233,8 +233,8 @@ gs_plugin_add_installed (GsPlugin *plugin,
 
 	/* add all installed apps */
 	for (l = plugin->priv->list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (gs_app_get_state (app) != AS_APP_STATE_INSTALLED)
+		app = AS_APP (l->data);
+		if (as_app_get_state (app) != AS_APP_STATE_INSTALLED)
 			continue;
 		gs_plugin_add_app (list, app);
 	}
@@ -246,11 +246,11 @@ out:
  * gs_plugin_epiphany_match_app_value:
  */
 static gboolean
-gs_plugin_epiphany_match_app_value (GsApp *app, const gchar *value)
+gs_plugin_epiphany_match_app_value (AsApp *app, const gchar *value)
 {
-	if (strcasestr (gs_app_get_name (app), value) != NULL)
+	if (strcasestr (as_app_get_name (app, NULL), value) != NULL)
 		return TRUE;
-	if (strcasestr (gs_app_get_summary (app), value) != NULL)
+	if (strcasestr (as_app_get_comment (app, NULL), value) != NULL)
 		return TRUE;
 	return FALSE;
 }
@@ -259,12 +259,12 @@ gs_plugin_epiphany_match_app_value (GsApp *app, const gchar *value)
  * gs_plugin_epiphany_match_app:
  */
 static gboolean
-gs_plugin_epiphany_match_app (GsApp *app, gchar **values)
+gs_plugin_epiphany_match_app (AsApp *app, gchar **values)
 {
 	gboolean matches = FALSE;
 	guint i;
 
-	/* does the GsApp match *all* search keywords */
+	/* does the AsApp match *all* search keywords */
 	for (i = 0; values[i] != NULL; i++) {
 		matches = gs_plugin_epiphany_match_app_value (app, values[i]);
 		if (!matches)
@@ -284,7 +284,7 @@ gs_plugin_add_search (GsPlugin *plugin,
 		      GError **error)
 {
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret = TRUE;
 
 	/* already loaded */
@@ -297,7 +297,7 @@ gs_plugin_add_search (GsPlugin *plugin,
 
 	/* add any matching apps */
 	for (l = plugin->priv->list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		if (gs_plugin_epiphany_match_app (app, values))
 			gs_plugin_add_app (list, app);
 	}
@@ -348,7 +348,7 @@ out:
  */
 gboolean
 gs_plugin_app_install (GsPlugin *plugin,
-		       GsApp *app,
+		       AsApp *app,
 		       GCancellable *cancellable,
 		       GError **error)
 {
@@ -383,7 +383,7 @@ out:
  */
 gboolean
 gs_plugin_app_remove (GsPlugin *plugin,
-		      GsApp *app,
+		      AsApp *app,
 		      GCancellable *cancellable,
 		      GError **error)
 {
@@ -418,7 +418,7 @@ out:
  * gs_plugin_write_file:
  */
 static gboolean
-gs_plugin_write_file (GsApp *app, const gchar *filename, GError **error)
+gs_plugin_write_file (AsApp *app, const gchar *filename, GError **error)
 {
 	GKeyFile *kf;
 	const gchar *url;
@@ -434,16 +434,16 @@ gs_plugin_write_file (GsApp *app, const gchar *filename, GError **error)
 	g_key_file_set_string (kf,
 			       G_KEY_FILE_DESKTOP_GROUP,
 			       G_KEY_FILE_DESKTOP_KEY_NAME,
-			       gs_app_get_name (app));
+			       as_app_get_name (app, NULL));
 	g_key_file_set_string (kf,
 			       G_KEY_FILE_DESKTOP_GROUP,
 			       G_KEY_FILE_DESKTOP_KEY_COMMENT,
-			       gs_app_get_summary (app));
+			       as_app_get_comment (app, NULL));
 
-	url = gs_app_get_url (app, GS_APP_URL_KIND_HOMEPAGE);
+	url = as_app_get_url_item (app, AS_URL_KIND_HOMEPAGE);
 	wmclass = g_strdup_printf ("%s-%s",
-				   gs_app_get_id (app),
-				   gs_app_get_metadata_item (app, "Epiphany::hash"));
+				   as_app_get_id (app),
+				   as_app_get_metadata_item (app, "Epiphany::hash"));
 	profile = g_strdup_printf ("%s/epiphany/app-%s",
 				   g_get_user_config_dir (), wmclass);
 	exec = g_strdup_printf ("epiphany --application-mode "
@@ -460,7 +460,7 @@ gs_plugin_write_file (GsApp *app, const gchar *filename, GError **error)
 				G_KEY_FILE_DESKTOP_GROUP,
 				G_KEY_FILE_DESKTOP_KEY_TERMINAL,
 				FALSE);
-	switch (gs_app_get_state (app)) {
+	switch (as_app_get_state (app)) {
 	case AS_APP_STATE_INSTALLING:
 	case AS_APP_STATE_INSTALLED:
 		enabled = TRUE;
@@ -480,7 +480,7 @@ gs_plugin_write_file (GsApp *app, const gchar *filename, GError **error)
 	g_key_file_set_string (kf,
 			       G_KEY_FILE_DESKTOP_GROUP,
 			       G_KEY_FILE_DESKTOP_KEY_ICON,
-			       gs_app_get_icon (app));
+			       as_app_get_icon (app));
 	g_key_file_set_string (kf,
 			       G_KEY_FILE_DESKTOP_GROUP,
 			       G_KEY_FILE_DESKTOP_KEY_STARTUP_WM_CLASS,
@@ -606,7 +606,7 @@ out:
  * gs_plugin_refine_app:
  */
 static gboolean
-gs_plugin_refine_app (GsPlugin *plugin, GsApp *app, GError **error)
+gs_plugin_refine_app (GsPlugin *plugin, AsApp *app, GError **error)
 {
 	gboolean ret;
 	gchar *filename = NULL;
@@ -619,20 +619,20 @@ gs_plugin_refine_app (GsPlugin *plugin, GsApp *app, GError **error)
 	gs_app_set_state (app, AS_APP_STATE_AVAILABLE);
 
 	/* calculate SHA1 hash of name */
-	hash = g_compute_checksum_for_string (G_CHECKSUM_SHA1, gs_app_get_name (app), -1);
-	gs_app_set_metadata (app, "Epiphany::hash", hash);
+	hash = g_compute_checksum_for_string (G_CHECKSUM_SHA1, as_app_get_name (app, NULL), -1);
+	as_app_add_metadata (app, "Epiphany::hash", hash, -1);
 
 	/* download icon if it does not exist */
 	filename_icon = g_strdup_printf ("%s/epiphany/app-%s-%s/app-icon.png",
 					 g_get_user_config_dir (),
-					 gs_app_get_id (app),
+					 as_app_get_id (app),
 					 hash);
 	if (!g_file_test (filename_icon, G_FILE_TEST_EXISTS)) {
 		ret = gs_mkdir_parent (filename_icon, error);
 		if (!ret)
 			goto out;
 		ret = gs_plugin_epiphany_download (plugin,
-						   gs_app_get_icon (app),
+						   as_app_get_icon (app),
 						   filename_icon,
 						   &error_local);
 		if (!ret) {
@@ -640,7 +640,7 @@ gs_plugin_refine_app (GsPlugin *plugin, GsApp *app, GError **error)
 			gs_app_set_state (app, AS_APP_STATE_UNKNOWN);
 			gs_app_set_state (app, AS_APP_STATE_UNAVAILABLE);
 			g_debug ("Failed to download %s: %s",
-				 gs_app_get_icon (app), error_local->message);
+				 as_app_get_icon (app), error_local->message);
 			g_error_free (error_local);
 			ret = TRUE;
 			goto out;
@@ -648,13 +648,13 @@ gs_plugin_refine_app (GsPlugin *plugin, GsApp *app, GError **error)
 	}
 
 	/* set local icon name */
-	gs_app_set_icon (app, filename_icon);
+	as_app_set_icon (app, filename_icon, -1);
 	ret = gs_app_load_icon (app, error);
 	if (!ret)
 		goto out;
 
 	/* save file */
-	filename = g_strdup_printf ("%s.desktop", gs_app_get_id (app));
+	filename = g_strdup_printf ("%s.desktop", as_app_get_id (app));
 	path = g_build_filename (g_get_user_data_dir (),
 				 "applications",
 				 filename,
@@ -686,7 +686,7 @@ gs_plugin_refine (GsPlugin *plugin,
 		  GError **error)
 {
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	const gchar *tmp;
 	gboolean ret = TRUE;
 
@@ -699,8 +699,8 @@ gs_plugin_refine (GsPlugin *plugin,
 	}
 
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (gs_app_get_id_kind (app) != AS_ID_KIND_WEB_APP)
+		app = AS_APP (l->data);
+		if (as_app_get_id_kind (app) != AS_ID_KIND_WEB_APP)
 			continue;
 		gs_app_set_size (app, 4096);
 		tmp = gs_app_get_source_id_default (app);

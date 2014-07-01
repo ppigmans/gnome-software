@@ -50,7 +50,7 @@ gs_plugin_add_updates_historical (GsPlugin *plugin,
 	gchar *packages = NULL;
 	gchar **split;
 	GKeyFile *key_file = NULL;
-	GsApp *app;
+	AsApp *app;
 	guint i;
 
 	/* was any offline update attempted */

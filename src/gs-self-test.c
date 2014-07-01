@@ -216,11 +216,11 @@ gs_markdown_func (void)
 }
 
 static gboolean
-gs_plugin_list_filter_cb (GsApp *app, gpointer user_data)
+gs_plugin_list_filter_cb (AsApp *app, gpointer user_data)
 {
-	if (g_strcmp0 (gs_app_get_id (app), "a") == 0)
+	if (g_strcmp0 (as_app_get_id (app), "a") == 0)
 		return FALSE;
-	if (g_strcmp0 (gs_app_get_id (app), "c") == 0)
+	if (g_strcmp0 (as_app_get_id (app), "c") == 0)
 		return FALSE;
 	return TRUE;
 }
@@ -231,7 +231,7 @@ gs_plugin_func (void)
 	GList *list = NULL;
 	GList *list_dup;
 	GList *list_remove = NULL;
-	GsApp *app;
+	AsApp *app;
 
 	/* add a couple of duplicate IDs */
 	app = gs_app_new ("a");
@@ -239,11 +239,11 @@ gs_plugin_func (void)
 	g_object_unref (app);
 
 	/* test refcounting */
-	g_assert_cmpstr (gs_app_get_id (GS_APP (list->data)), ==, "a");
+	g_assert_cmpstr (as_app_get_id (GS_APP (list->data)), ==, "a");
 	list_dup = gs_plugin_list_copy (list);
 	gs_plugin_list_free (list);
 	g_assert_cmpint (g_list_length (list_dup), ==, 1);
-	g_assert_cmpstr (gs_app_get_id (GS_APP (list_dup->data)), ==, "a");
+	g_assert_cmpstr (as_app_get_id (GS_APP (list_dup->data)), ==, "a");
 	gs_plugin_list_free (list_dup);
 
 	/* test removing obects */
@@ -259,7 +259,7 @@ gs_plugin_func (void)
 	g_assert_cmpint (g_list_length (list_remove), ==, 3);
 	gs_plugin_list_filter (&list_remove, gs_plugin_list_filter_cb, NULL);
 	g_assert_cmpint (g_list_length (list_remove), ==, 1);
-	g_assert_cmpstr (gs_app_get_id (GS_APP (list_remove->data)), ==, "b");
+	g_assert_cmpstr (as_app_get_id (GS_APP (list_remove->data)), ==, "b");
 
 	/* test removing duplicates */
 	app = gs_app_new ("b");
@@ -270,21 +270,21 @@ gs_plugin_func (void)
 	g_object_unref (app);
 	gs_plugin_list_filter_duplicates (&list_remove);
 	g_assert_cmpint (g_list_length (list_remove), ==, 1);
-	g_assert_cmpstr (gs_app_get_id (GS_APP (list_remove->data)), ==, "b");
+	g_assert_cmpstr (as_app_get_id (GS_APP (list_remove->data)), ==, "b");
 	gs_plugin_list_free (list_remove);
 }
 
 static void
 gs_app_subsume_func (void)
 {
-	GsApp *new;
-	GsApp *old;
+	AsApp *new;
+	AsApp *old;
 
 	new = gs_app_new ("xxx.desktop");
 	old = gs_app_new ("yyy.desktop");
-	gs_app_set_metadata (old, "foo", "bar");
+	as_app_add_metadata (old, "foo", "bar");
 	gs_app_subsume (new, old);
-	g_assert_cmpstr (gs_app_get_metadata_item (new, "foo"), ==, "bar");
+	g_assert_cmpstr (as_app_get_metadata_item (new, "foo"), ==, "bar");
 
 	g_object_unref (new);
 	g_object_unref (old);
@@ -293,12 +293,12 @@ gs_app_subsume_func (void)
 static void
 gs_app_func (void)
 {
-	GsApp *app;
+	AsApp *app;
 
 	app = gs_app_new ("gnome-software");
 	g_assert (GS_IS_APP (app));
 
-	g_assert_cmpstr (gs_app_get_id (app), ==, "gnome-software");
+	g_assert_cmpstr (as_app_get_id (app), ==, "gnome-software");
 
 	/* check we clean up the version, but not at the expense of having
 	 * the same string as the update version */
@@ -311,11 +311,11 @@ gs_app_func (void)
 
 	/* check the quality stuff works */
 	gs_app_set_name (app, GS_APP_QUALITY_NORMAL, "dave");
-	g_assert_cmpstr (gs_app_get_name (app), ==, "dave");
+	g_assert_cmpstr (as_app_get_name (app, NULL), ==, "dave");
 	gs_app_set_name (app, GS_APP_QUALITY_LOWEST, "brian");
-	g_assert_cmpstr (gs_app_get_name (app), ==, "dave");
+	g_assert_cmpstr (as_app_get_name (app, NULL), ==, "dave");
 	gs_app_set_name (app, GS_APP_QUALITY_HIGHEST, "hugh");
-	g_assert_cmpstr (gs_app_get_name (app), ==, "hugh");
+	g_assert_cmpstr (as_app_get_name (app, NULL), ==, "hugh");
 
 	g_object_unref (app);
 }
@@ -324,7 +324,7 @@ static guint _status_changed_cnt = 0;
 
 static void
 gs_plugin_loader_status_changed_cb (GsPluginLoader *plugin_loader,
-				    GsApp *app,
+				    AsApp *app,
 				    GsPluginStatus status,
 				    gpointer user_data)
 {
@@ -334,8 +334,8 @@ gs_plugin_loader_status_changed_cb (GsPluginLoader *plugin_loader,
 static void
 gs_plugin_loader_dedupe_func (void)
 {
-	GsApp *app1;
-	GsApp *app2;
+	AsApp *app1;
+	AsApp *app2;
 	GsPluginLoader *loader;
 
 	loader = gs_plugin_loader_new ();
@@ -344,16 +344,16 @@ gs_plugin_loader_dedupe_func (void)
 	app1 = gs_app_new ("app1");
 	gs_app_set_description (app1, GS_APP_QUALITY_NORMAL, "description");
 	app1 = gs_plugin_loader_dedupe (loader, app1);
-	g_assert_cmpstr (gs_app_get_id (app1), ==, "app1");
-	g_assert_cmpstr (gs_app_get_description (app1), ==, "description");
+	g_assert_cmpstr (as_app_get_id (app1), ==, "app1");
+	g_assert_cmpstr (as_app_get_description (app1), ==, "description");
 
 	app2 = gs_app_new ("app1");
 	app2 = gs_plugin_loader_dedupe (loader, app2);
-	g_assert_cmpstr (gs_app_get_id (app2), ==, "app1");
-	g_assert_cmpstr (gs_app_get_description (app2), ==, "description");
+	g_assert_cmpstr (as_app_get_id (app2), ==, "app1");
+	g_assert_cmpstr (as_app_get_description (app2), ==, "description");
 	app2 = gs_plugin_loader_dedupe (loader, app2);
-	g_assert_cmpstr (gs_app_get_id (app2), ==, "app1");
-	g_assert_cmpstr (gs_app_get_description (app2), ==, "description");
+	g_assert_cmpstr (as_app_get_id (app2), ==, "app1");
+	g_assert_cmpstr (as_app_get_description (app2), ==, "description");
 
 	g_object_unref (app1);
 	g_object_unref (app2);
@@ -368,7 +368,7 @@ gs_plugin_loader_func (void)
 	GError *error = NULL;
 	GList *list;
 	GList *l;
-	GsApp *app;
+	AsApp *app;
 	GsPluginLoader *loader;
 
 	/* not avaiable in make distcheck */
@@ -408,12 +408,12 @@ gs_plugin_loader_func (void)
 	g_assert_cmpint (_status_changed_cnt, ==, 1);
 	g_assert_cmpint (g_list_length (list), ==, 6);
 	app = g_list_nth_data (list, 0);
-	g_assert_cmpstr (gs_app_get_id (app), ==, "gnome-boxes");
-	g_assert_cmpstr (gs_app_get_name (app), ==, "Boxes");
+	g_assert_cmpstr (as_app_get_id (app), ==, "gnome-boxes");
+	g_assert_cmpstr (as_app_get_name (app, NULL), ==, "Boxes");
 
 	app = g_list_nth_data (list, 1);
-	g_assert_cmpstr (gs_app_get_id (app), ==, "gedit");
-	g_assert_cmpstr (gs_app_get_summary (app), ==, "Edit text files");
+	g_assert_cmpstr (as_app_get_id (app), ==, "gedit");
+	g_assert_cmpstr (as_app_get_comment (app, NULL), ==, "Edit text files");
 
 	gs_plugin_list_free (list);
 
@@ -425,15 +425,15 @@ gs_plugin_loader_func (void)
 	g_assert_cmpint (_status_changed_cnt, >=, 1);
 	g_assert_cmpint (g_list_length (list), ==, 2);
 	app = g_list_nth_data (list, 0);
-	g_assert_cmpstr (gs_app_get_id (app), ==, "os-update:gnome-boxes-libs;0.0.1;i386;updates-testing,libvirt-glib-devel;0.0.1;noarch;fedora");
-	g_assert_cmpstr (gs_app_get_name (app), ==, "OS Updates");
-//	g_assert_cmpstr (gs_app_get_summary (app), ==, "Includes performance, stability and security improvements for all users\nDo not segfault when using newer versons of libvirt.\nFix several memory leaks.");
+	g_assert_cmpstr (as_app_get_id (app), ==, "os-update:gnome-boxes-libs;0.0.1;i386;updates-testing,libvirt-glib-devel;0.0.1;noarch;fedora");
+	g_assert_cmpstr (as_app_get_name (app, NULL), ==, "OS Updates");
+//	g_assert_cmpstr (as_app_get_comment (app, NULL), ==, "Includes performance, stability and security improvements for all users\nDo not segfault when using newer versons of libvirt.\nFix several memory leaks.");
 	g_assert_cmpint (gs_app_get_kind (app), ==, GS_APP_KIND_OS_UPDATE);
 
 	app = g_list_nth_data (list, 1);
-	g_assert_cmpstr (gs_app_get_id (app), ==, "gnome-boxes");
-	g_assert_cmpstr (gs_app_get_name (app), ==, "Boxes");
-	g_assert_cmpstr (gs_app_get_summary (app), ==, "Do not segfault when using newer versons of libvirt.");
+	g_assert_cmpstr (as_app_get_id (app), ==, "gnome-boxes");
+	g_assert_cmpstr (as_app_get_name (app, NULL), ==, "Boxes");
+	g_assert_cmpstr (as_app_get_comment (app, NULL), ==, "Do not segfault when using newer versons of libvirt.");
 	g_assert_cmpint (gs_app_get_kind (app), ==, GS_APP_KIND_NORMAL);
 	gs_plugin_list_free (list);
 
@@ -453,14 +453,14 @@ gs_plugin_loader_func (void)
 
 	/* find a specific app */
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		if (g_strcmp0 (gs_app_get_id (app), "gnome-screenshot") == 0)
+		app = AS_APP (l->data);
+		if (g_strcmp0 (as_app_get_id (app), "gnome-screenshot") == 0)
 			break;
 	}
-	g_assert_cmpstr (gs_app_get_id (app), ==, "gnome-screenshot");
-	g_assert_cmpstr (gs_app_get_name (app), ==, "Screenshot");
-	g_assert_cmpstr (gs_app_get_summary (app), ==, "Save images of your screen or individual windows");
-	g_assert_cmpint (gs_app_get_state (app), ==, AS_APP_STATE_INSTALLED);
+	g_assert_cmpstr (as_app_get_id (app), ==, "gnome-screenshot");
+	g_assert_cmpstr (as_app_get_name (app, NULL), ==, "Screenshot");
+	g_assert_cmpstr (as_app_get_comment (app, NULL), ==, "Save images of your screen or individual windows");
+	g_assert_cmpint (as_app_get_state (app), ==, AS_APP_STATE_INSTALLED);
 	g_assert_cmpint (gs_app_get_kind (app), ==, GS_APP_KIND_SYSTEM);
 	g_assert (gs_app_get_pixbuf (app) != NULL);
 	gs_plugin_list_free (list);
@@ -509,7 +509,7 @@ static void
 gs_plugin_loader_refine_func (void)
 {
 	GError *error = NULL;
-	GsApp *app;
+	AsApp *app;
 	GsPluginLoader *loader;
 	const gchar *url;
 	gboolean ret;
@@ -542,9 +542,9 @@ gs_plugin_loader_refine_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	g_assert_cmpstr (gs_app_get_licence (app), ==, "<a href=\"http://spdx.org/licenses/GPL-3.0+\">GPL-3.0+</a> and <a href=\"http://spdx.org/licenses/GPL-3.0\">GPL-3.0</a>");
-	g_assert_cmpstr (gs_app_get_description (app), !=, NULL);
-	url = gs_app_get_url (app, GS_APP_URL_KIND_HOMEPAGE);
+	g_assert_cmpstr (as_app_get_project_license (app), ==, "<a href=\"http://spdx.org/licenses/GPL-3.0+\">GPL-3.0+</a> and <a href=\"http://spdx.org/licenses/GPL-3.0\">GPL-3.0</a>");
+	g_assert_cmpstr (as_app_get_description (app, NULL), !=, NULL);
+	url = as_app_get_url_item (app, AS_URL_KIND_HOMEPAGE);
 	g_assert_cmpstr (url, ==, "http://www.gimp.org/");
 
 	g_object_unref (app);
@@ -624,7 +624,7 @@ gs_plugin_loader_empty_func (void)
 							 gs_category_get_id (category),
 							 gs_category_get_id (sub),
 							 gs_app_get_source_default (GS_APP (g->data)),
-							 gs_app_get_id (GS_APP (g->data)));
+							 as_app_get_id (GS_APP (g->data)));
 					}
 				}
 				g_debug ("APPS[%i]:\t%s/%s",
@@ -646,7 +646,7 @@ static void
 gs_plugin_loader_webapps_func (void)
 {
 	GsPluginLoader *loader;
-	GsApp *app;
+	AsApp *app;
 	gchar *path;
 	gboolean ret;
 	GError *error = NULL;
@@ -693,7 +693,7 @@ gs_plugin_loader_webapps_func (void)
 					   &error);
 	g_assert_no_error (error);
 	g_assert (ret);
-	g_assert_cmpint (gs_app_get_state (app), ==, AS_APP_STATE_UNAVAILABLE);
+	g_assert_cmpint (as_app_get_state (app), ==, AS_APP_STATE_UNAVAILABLE);
 
 	g_unlink (path);
 	g_free (path);

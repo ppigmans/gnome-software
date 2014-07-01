@@ -95,7 +95,7 @@ out:
  * gs_plugin_add_app:
  **/
 void
-gs_plugin_add_app (GList **list, GsApp *app)
+gs_plugin_add_app (GList **list, AsApp *app)
 {
 	g_return_if_fail (list != NULL);
 	g_return_if_fail (GS_IS_APP (app));
@@ -114,21 +114,21 @@ gs_plugin_list_free (GList *list)
 /**
  * gs_plugin_list_filter:
  *
- * If func() returns TRUE for the GsApp, then the app is kept.
+ * If func() returns TRUE for the AsApp, then the app is kept.
  **/
 void
 gs_plugin_list_filter (GList **list, GsPluginListFilter func, gpointer user_data)
 {
 	GList *l;
 	GList *new = NULL;
-	GsApp *app;
+	AsApp *app;
 
 	g_return_if_fail (list != NULL);
 	g_return_if_fail (func != NULL);
 
 	/* see if any of the apps need filtering */
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		if (func (app, user_data))
 			gs_plugin_add_app (&new, app);
 	}
@@ -149,8 +149,8 @@ gs_plugin_list_randomize_cb (gconstpointer a, gconstpointer b, gpointer user_dat
 	gchar *key;
 
 	key = g_strdup_printf ("Plugin::sort-key[%p]", user_data);
-	k1 = gs_app_get_metadata_item (GS_APP (a), key);
-	k2 = gs_app_get_metadata_item (GS_APP (b), key);
+	k1 = as_app_get_metadata_item (AS_APP (a), key);
+	k2 = as_app_get_metadata_item (AS_APP (b), key);
 	g_free (key);
 	return g_strcmp0 (k1, k2);
 }
@@ -166,7 +166,7 @@ gs_plugin_list_randomize (GList **list)
 	GDateTime *date;
 	GList *l;
 	GRand *rand;
-	GsApp *app;
+	AsApp *app;
 	gchar *key;
 	gchar sort_key[] = { '\0', '\0', '\0', '\0' };
 
@@ -175,16 +175,16 @@ gs_plugin_list_randomize (GList **list)
 	date = g_date_time_new_now_utc ();
 	g_rand_set_seed (rand, g_date_time_get_day_of_year (date));
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		sort_key[0] = g_rand_int_range (rand, (gint32) 'A', (gint32) 'Z');
 		sort_key[1] = g_rand_int_range (rand, (gint32) 'A', (gint32) 'Z');
 		sort_key[2] = g_rand_int_range (rand, (gint32) 'A', (gint32) 'Z');
-		gs_app_set_metadata (app, key, sort_key);
+		as_app_add_metadata (app, key, sort_key, -1);
 	}
 	*list = g_list_sort_with_data (*list, gs_plugin_list_randomize_cb, list);
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		gs_app_set_metadata (app, key, NULL);
+		app = AS_APP (l->data);
+		as_app_add_metadata (app, key, NULL, -1);
 	}
 	g_free (key);
 	g_rand_free (rand);
@@ -200,8 +200,8 @@ gs_plugin_list_filter_duplicates (GList **list)
 	GHashTable *hash;
 	GList *l;
 	GList *new = NULL;
-	GsApp *app;
-	GsApp *found;
+	AsApp *app;
+	AsApp *found;
 	const gchar *id;
 
 	g_return_if_fail (list != NULL);
@@ -209,8 +209,8 @@ gs_plugin_list_filter_duplicates (GList **list)
 	/* create a new list with just the unique items */
 	hash = g_hash_table_new (g_str_hash, g_str_equal);
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
-		id = gs_app_get_id_full (app);
+		app = AS_APP (l->data);
+		id = as_app_get_id_full (app);
 		if (id == NULL) {
 			gs_plugin_add_app (&new, app);
 			continue;
@@ -242,7 +242,7 @@ gs_plugin_list_copy (GList *list)
 
 typedef struct {
 	GsPlugin	*plugin;
-	GsApp		*app;
+	AsApp		*app;
 	GsPluginStatus	 status;
 } GsPluginStatusHelper;
 
@@ -269,7 +269,7 @@ gs_plugin_status_update_cb (gpointer user_data)
  * gs_plugin_status_update:
  **/
 void
-gs_plugin_status_update (GsPlugin *plugin, GsApp *app, GsPluginStatus status)
+gs_plugin_status_update (GsPlugin *plugin, AsApp *app, GsPluginStatus status)
 {
 	GsPluginStatusHelper *helper;
 	guint id;

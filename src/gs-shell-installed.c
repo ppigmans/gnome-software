@@ -83,7 +83,7 @@ gs_shell_installed_app_row_activated_cb (GtkListBox *list_box,
 		selected = gs_app_row_get_selected (GS_APP_ROW (row));
 		gs_app_row_set_selected (GS_APP_ROW (row), !selected);
 	} else {
-		GsApp *app;
+		AsApp *app;
 		app = gs_app_row_get_app (GS_APP_ROW (row));
 		gs_shell_show_app (shell_installed->priv->shell, app);
 	}
@@ -115,7 +115,7 @@ gs_shell_installed_app_removed_cb (GObject *source,
 	GsPluginLoader *plugin_loader = GS_PLUGIN_LOADER (source);
 	GsShellInstalledHelper *helper = (GsShellInstalledHelper *) user_data;
 	GsShellInstalledPrivate *priv = helper->shell_installed->priv;
-	GsApp *app;
+	AsApp *app;
 	gboolean ret;
 
 	ret = gs_plugin_loader_app_action_finish (plugin_loader,
@@ -124,7 +124,7 @@ gs_shell_installed_app_removed_cb (GObject *source,
 	if (!ret) {
 		app = gs_app_row_get_app (helper->app_row);
 		g_warning ("failed to remove %s: %s",
-			   gs_app_get_id (app),
+			   as_app_get_id (app),
 			   error->message);
 		gs_app_notify_failed_modal (priv->builder,
 					    app,
@@ -134,7 +134,7 @@ gs_shell_installed_app_removed_cb (GObject *source,
 	} else {
 		/* remove from the list */
 		app = gs_app_row_get_app (helper->app_row);
-		g_debug ("removed %s", gs_app_get_id (app));
+		g_debug ("removed %s", as_app_get_id (app));
 		gs_app_row_unreveal (helper->app_row);
 		g_signal_connect (helper->app_row, "unrevealed",
 		                  G_CALLBACK (row_unrevealed), NULL);
@@ -152,7 +152,7 @@ static void
 gs_shell_installed_app_remove_cb (GsAppRow *app_row,
 				  GsShellInstalled *shell_installed)
 {
-	GsApp *app;
+	AsApp *app;
 	GsShellInstalledPrivate *priv = shell_installed->priv;
 	GString *markup;
 	GtkResponseType response;
@@ -167,7 +167,7 @@ gs_shell_installed_app_remove_cb (GsAppRow *app_row,
 				/* TRANSLATORS: this is a prompt message, and
 				 * '%s' is an application summary, e.g. 'GNOME Clocks' */
 				_("Are you sure you want to remove %s?"),
-				gs_app_get_name (app));
+				as_app_get_name (app, NULL));
 	g_string_prepend (markup, "<b>");
 	g_string_append (markup, "</b>");
 	dialog = gtk_message_dialog_new (window,
@@ -179,15 +179,15 @@ gs_shell_installed_app_remove_cb (GsAppRow *app_row,
 	gtk_message_dialog_format_secondary_markup (GTK_MESSAGE_DIALOG (dialog),
 						    /* TRANSLATORS: longer dialog text */
 						    _("%s will be removed, and you will have to install it to use it again."),
-						    gs_app_get_name (app));
+						    as_app_get_name (app, NULL));
 	/* TRANSLATORS: this is button text to remove the application */
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("Remove"), GTK_RESPONSE_OK);
-	if (gs_app_get_state (app) == AS_APP_STATE_QUEUED_FOR_INSTALL)
+	if (as_app_get_state (app) == AS_APP_STATE_QUEUED_FOR_INSTALL)
 		response = GTK_RESPONSE_OK; /* pending install */
 	else
 		response = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (response == GTK_RESPONSE_OK) {
-		g_debug ("removing %s", gs_app_get_id (app));
+		g_debug ("removing %s", as_app_get_id (app));
 		helper = g_new0 (GsShellInstalledHelper, 1);
 		helper->shell_installed = g_object_ref (shell_installed);
 		helper->app_row = g_object_ref (app_row);
@@ -206,7 +206,7 @@ gs_shell_installed_app_remove_cb (GsAppRow *app_row,
  * gs_shell_installed_notify_state_changed_cb:
  **/
 static void
-gs_shell_installed_notify_state_changed_cb (GsApp *app,
+gs_shell_installed_notify_state_changed_cb (AsApp *app,
 					    GParamSpec *pspec,
 					    GsShellInstalled *shell)
 {
@@ -216,7 +216,7 @@ gs_shell_installed_notify_state_changed_cb (GsApp *app,
 static void selection_changed (GsShellInstalled *shell);
 
 static void
-gs_shell_installed_add_app (GsShellInstalled *shell, GsApp *app)
+gs_shell_installed_add_app (GsShellInstalled *shell, AsApp *app)
 {
 	GsShellInstalledPrivate *priv = shell->priv;
 	GtkWidget *app_row;
@@ -253,7 +253,7 @@ gs_shell_installed_get_installed_cb (GObject *source_object,
 	GError *error = NULL;
 	GList *l;
 	GList *list;
-	GsApp *app;
+	AsApp *app;
 	GsShellInstalled *shell_installed = GS_SHELL_INSTALLED (user_data);
 	GsShellInstalledPrivate *priv = shell_installed->priv;
 	GsPluginLoader *plugin_loader = GS_PLUGIN_LOADER (source_object);
@@ -273,7 +273,7 @@ gs_shell_installed_get_installed_cb (GObject *source_object,
 		goto out;
 	}
 	for (l = list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		gs_shell_installed_add_app (shell_installed, app);
 	}
 out:
@@ -353,7 +353,7 @@ gs_shell_installed_refresh (GsShellInstalled *shell_installed, gboolean scroll_u
  * by name.
  **/
 static gchar *
-gs_shell_installed_get_app_sort_key (GsApp *app)
+gs_shell_installed_get_app_sort_key (AsApp *app)
 {
 	GString *key;
 	gchar *casefolded_name;
@@ -361,7 +361,7 @@ gs_shell_installed_get_app_sort_key (GsApp *app)
 	key = g_string_sized_new (64);
 
 	/* sort installed, removing, other */
-	switch (gs_app_get_state (app)) {
+	switch (as_app_get_state (app)) {
 	case AS_APP_STATE_INSTALLING:
 	case AS_APP_STATE_QUEUED_FOR_INSTALL:
 		g_string_append (key, "1:");
@@ -375,7 +375,7 @@ gs_shell_installed_get_app_sort_key (GsApp *app)
 	}
 
 	/* sort desktop files, then addons */
-	switch (gs_app_get_id_kind (app)) {
+	switch (as_app_get_id_kind (app)) {
 	case AS_ID_KIND_DESKTOP:
 	case AS_ID_KIND_WEB_APP:
 		g_string_append (key, "1:");
@@ -399,7 +399,7 @@ gs_shell_installed_get_app_sort_key (GsApp *app)
 	}
 
 	/* finally, sort by short name */
-	casefolded_name = g_utf8_casefold (gs_app_get_name (app), -1);
+	casefolded_name = g_utf8_casefold (as_app_get_name (app, NULL), -1);
 	g_string_append (key, casefolded_name);
 	g_free (casefolded_name);
 
@@ -414,7 +414,7 @@ gs_shell_installed_sort_func (GtkListBoxRow *a,
 			      GtkListBoxRow *b,
 			      gpointer user_data)
 {
-	GsApp *a1, *a2;
+	AsApp *a1, *a2;
 	gchar *key1 = NULL;
 	gchar *key2 = NULL;
 	gint retval = 0;
@@ -442,10 +442,10 @@ out:
  * gs_shell_installed_is_addon_id_kind
  **/
 static gboolean
-gs_shell_installed_is_addon_id_kind (GsApp *app)
+gs_shell_installed_is_addon_id_kind (AsApp *app)
 {
 	AsIdKind id_kind;
-	id_kind = gs_app_get_id_kind (app);
+	id_kind = as_app_get_id_kind (app);
 	if (id_kind == AS_ID_KIND_DESKTOP)
 		return FALSE;
 	if (id_kind == AS_ID_KIND_WEB_APP)
@@ -454,9 +454,9 @@ gs_shell_installed_is_addon_id_kind (GsApp *app)
 }
 
 static gboolean
-gs_shell_installed_is_system_application (GsApp *app)
+gs_shell_installed_is_system_application (AsApp *app)
 {
-	if (gs_app_get_id_kind (app) == AS_ID_KIND_DESKTOP &&
+	if (as_app_get_id_kind (app) == AS_ID_KIND_DESKTOP &&
 	    gs_app_get_kind (app) == GS_APP_KIND_SYSTEM)
 		return TRUE;
 	return FALSE;
@@ -506,7 +506,7 @@ gs_shell_installed_list_header_func (GtkListBoxRow *row,
 
 static gboolean
 gs_shell_installed_has_app (GsShellInstalled *shell_installed,
-                            GsApp *app)
+                            AsApp *app)
 {
 	GsShellInstalledPrivate *priv = shell_installed->priv;
 	GList *children, *l;
@@ -533,7 +533,7 @@ gs_shell_installed_pending_apps_changed_cb (GsPluginLoader *plugin_loader,
 					    GsShellInstalled *shell_installed)
 {
 	GPtrArray *pending;
-	GsApp *app;
+	AsApp *app;
 	GtkWidget *widget;
 	gchar *label;
 	guint i;
@@ -550,7 +550,7 @@ gs_shell_installed_pending_apps_changed_cb (GsPluginLoader *plugin_loader,
 		g_free (label);
 	}
 	for (i = 0; i < pending->len; i++) {
-		app = GS_APP (g_ptr_array_index (pending, i));
+		app = AS_APP (g_ptr_array_index (pending, i));
 		/* Be careful not to add pending apps more than once. */
 		if (gs_shell_installed_has_app (shell_installed, app) == FALSE)
 			gs_shell_installed_add_app (shell_installed, app);
@@ -650,7 +650,7 @@ selection_changed (GsShellInstalled *shell_installed)
 	GsShellInstalledPrivate *priv = shell_installed->priv;
 	GsFolders *folders;
 	GList *apps, *l;
-	GsApp *app;
+	AsApp *app;
 	gboolean has_folders, has_nonfolders;
 
 	folders = gs_folders_get ();
@@ -659,8 +659,8 @@ selection_changed (GsShellInstalled *shell_installed)
 	for (l = apps; l; l = l->next) {
 		app = l->data;
 		if (gs_folders_get_app_folder (folders,
-				 	       gs_app_get_id_full (app),
-					       gs_app_get_categories (app))) {
+				 	       as_app_get_id_full (app),
+					       as_app_get_categories (app))) {
 			has_folders = TRUE;
 		} else {
 			has_nonfolders = TRUE;
@@ -701,15 +701,15 @@ remove_folders (GtkButton *button, GsShellInstalled *shell_installed)
 {
 	GList *apps, *l;
 	GsFolders *folders;
-	GsApp *app;
+	AsApp *app;
 
 	folders = gs_folders_get ();
 	apps = get_selected_apps (shell_installed);
 	for (l = apps; l; l = l->next) {
 		app = l->data;
 		gs_folders_set_app_folder (folders,
-					   gs_app_get_id_full (app),
-					   gs_app_get_categories (app),
+					   as_app_get_id_full (app),
+					   as_app_get_categories (app),
 					   NULL);
 	}
 	g_list_free (apps);

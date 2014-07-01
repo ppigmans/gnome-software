@@ -234,7 +234,7 @@ gs_plugin_app_set_rating_pkg (GsPlugin *plugin,
  */
 gboolean
 gs_plugin_app_set_rating (GsPlugin *plugin,
-			  GsApp *app,
+			  AsApp *app,
 			  GCancellable *cancellable,
 			  GError **error)
 {
@@ -246,7 +246,7 @@ gs_plugin_app_set_rating (GsPlugin *plugin,
 	/* get the package name */
 	sources = gs_app_get_sources (app);
 	if (sources->len == 0) {
-		g_warning ("no pkgname for %s", gs_app_get_id (app));
+		g_warning ("no pkgname for %s", as_app_get_id (app));
 		goto out;
 	}
 
@@ -663,7 +663,7 @@ gs_plugin_refine (GsPlugin *plugin,
 {
 	GList *l;
 	GPtrArray *sources;
-	GsApp *app;
+	AsApp *app;
 	const gchar *pkgname;
 	gboolean ret = TRUE;
 	gint rating;
@@ -684,7 +684,7 @@ gs_plugin_refine (GsPlugin *plugin,
 
 	/* add any missing ratings data */
 	for (l = *list; l != NULL; l = l->next) {
-		app = GS_APP (l->data);
+		app = AS_APP (l->data);
 		if (gs_app_get_rating (app) != -1)
 			continue;
 		sources = gs_app_get_sources (app);
@@ -705,7 +705,7 @@ gs_plugin_refine (GsPlugin *plugin,
 				gs_app_set_rating_kind (app, GS_APP_RATING_KIND_SYSTEM);
 				if (confidence > 50 && rating > 80) {
 					g_debug ("%s is popular [confidence %i]",
-						 gs_app_get_id (app), confidence);
+						 as_app_get_id (app), confidence);
 					gs_app_add_kudo (app, GS_APP_KUDO_POPULAR);
 				}
 			}
