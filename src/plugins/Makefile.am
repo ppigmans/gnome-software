@@ -26,6 +26,7 @@ noinst_LTLIBRARIES =					\
 
 plugindir = $(libdir)/gs-plugins-${GS_PLUGIN_API_VERSION}
 plugin_LTLIBRARIES =					\
+	libgs_plugin_xdg_app.la				\
 	libgs_plugin_appstream.la			\
 	libgs_plugin_hardcoded-featured.la		\
 	libgs_plugin_hardcoded-categories.la		\
@@ -79,6 +80,11 @@ libgs_plugin_appstream_la_SOURCES =			\
 libgs_plugin_appstream_la_LIBADD = $(GS_PLUGIN_LIBS) $(APPSTREAM_LIBS)
 libgs_plugin_appstream_la_LDFLAGS = -module -avoid-version
 libgs_plugin_appstream_la_CFLAGS = $(GS_PLUGIN_CFLAGS) $(WARN_CFLAGS)
+
+libgs_plugin_xdg_app_la_SOURCES = gs-plugin-xdg-app.c
+libgs_plugin_xdg_app_la_LIBADD = $(GS_PLUGIN_LIBS)
+libgs_plugin_xdg_app_la_LDFLAGS = -module -avoid-version
+libgs_plugin_xdg_app_la_CFLAGS = $(GS_PLUGIN_CFLAGS) $(WARN_CFLAGS)
 
 libgs_plugin_moduleset_la_SOURCES =			\
 	gs-moduleset.c					\

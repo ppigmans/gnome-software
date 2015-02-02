@@ -92,6 +92,8 @@ gs_plugin_initialize (GsPlugin *plugin)
 			  G_CALLBACK (gs_plugin_appstream_store_changed_cb),
 			  plugin);
 
+gs_plugin_set_enabled (plugin, FALSE);
+
 	/* AppInstall does not ever give us a long description */
 	if (gs_plugin_check_distro_id (plugin, "debian") ||
 	    gs_plugin_check_distro_id (plugin, "ubuntu")) {
