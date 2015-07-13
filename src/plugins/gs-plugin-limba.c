@@ -217,3 +217,66 @@ gs_plugin_app_install (GsPlugin *plugin,
 
 	return TRUE;
 }
+
+/**
+ * gs_plugin_add_sources:
+ */
+gboolean
+gs_plugin_add_sources (GsPlugin *plugin,
+		       GList **list,
+		       GCancellable *cancellable,
+		       GError **error)
+{
+	/* TODO: Limba does not expose "simple" API for this yet - add this feature later. */
+
+	return TRUE;
+}
+
+/**
+ * gs_plugin_add_updates:
+ */
+gboolean
+gs_plugin_add_updates (GsPlugin *plugin,
+			GList **list,
+			GCancellable *cancellable,
+			GError **error)
+{
+	_cleanup_list_free_ GList *updates = NULL;
+	GList *l;
+	GError *local_error = NULL;
+
+	updates = li_manager_get_update_list (plugin->priv->mgr, &local_error);
+	if (local_error != NULL) {
+		g_propagate_error (error, local_error);
+		return FALSE;
+	}
+
+	for (l = updates; l != NULL; l = l->next) {
+		LiPkgInfo *old_p;
+		_cleanup_object_unref_ GsApp *app = NULL;
+		LiUpdateItem *uitem = LI_UPDATE_ITEM (l->data);
+
+		old_p = li_update_item_get_installed_pkg (uitem);
+
+		/* FIXME: We actually want the AppStream ID of the Limba bundle here.
+		 * We can fetch that from the AS data (get_cpt_data())
+		 * GS currently does not allow updates from packages with empty package-ids,
+		 * this needs to be fixed in GS before the Limba code can work.
+		 */
+		app = gs_app_new (li_pkg_info_get_name (old_p));
+
+		gs_app_set_management_plugin (app, "Limba");
+		gs_app_set_state (app, AS_APP_STATE_UPDATABLE);
+		gs_app_set_kind (app, GS_APP_KIND_PACKAGE);
+		gs_plugin_add_app (list, app);
+		gs_app_set_name (app,
+				 GS_APP_QUALITY_LOWEST,
+				 li_pkg_info_get_name (old_p));
+		gs_app_set_summary (app,
+				    GS_APP_QUALITY_LOWEST,
+				    li_pkg_info_get_name (old_p));
+		gs_plugin_add_app (list, app);
+	}
+
+	return TRUE;
+}
