@@ -206,6 +206,60 @@
           </packing>
         </child>
         <child>
+          <object class="GtkBox" id="downloading_box">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <property name="valign">center</property>
+            <property name="spacing">16</property>
+            <child>
+              <object class="GtkImage" id="downloading_icon">
+                <property name="visible">True</property>
+                <property name="icon_name">gnome-software-symbolic</property>
+                <property name="pixel-size">128</property>
+                <property name="margin_bottom">32</property>
+                <style>
+                  <class name="dim-label"/>
+                </style>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkProgressBar" id="downloading_progressbar">
+                <property name="visible">True</property>
+                <property name="width_request">280</property>
+                <property name="halign">center</property>
+                <property name="fraction">0.3</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="downloading_label">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Software catalog is being downloaded</property>
+                <style>
+                  <class name="dim-label"/>
+                </style>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="name">downloading</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkGrid" id="noresults_grid_overview">
             <property name="visible">True</property>
             <property name="hexpand">True</property>

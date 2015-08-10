@@ -335,9 +335,6 @@ gs_shell_overview_get_categories_cb (GObject *source_object,
 	}
 out:
 	gs_plugin_list_free (list);
-	if (has_category) {
-		priv->empty = FALSE;
-	}
 	gtk_widget_set_visible (priv->category_heading, has_category);
 
 	priv->loading_categories = FALSE;
@@ -487,6 +484,27 @@ gs_shell_overview_switch_to (GsShellOverview *shell, gboolean scroll_up)
 	gs_shell_overview_load (shell);
 }
 
+static void
+status_changed_cb (GsPluginLoader *plugin_loader,
+                   GsApp *app,
+                   GsPluginStatus status,
+                   GsShellOverview *shell_overview)
+{
+	GsShellOverviewPrivate *priv = shell_overview->priv;
+	GtkWidget *widget;
+
+	// XXX: what happens if we start in another mode and get the downloading status change?
+	if (gs_shell_get_mode (priv->shell) != GS_SHELL_MODE_OVERVIEW)
+		return;
+
+	if (!priv->cache_valid && status == GS_PLUGIN_STATUS_DOWNLOADING) {
+		widget = GTK_WIDGET (gtk_builder_get_object (priv->builder, "search_bar"));
+		gtk_widget_hide (widget);
+
+		gtk_stack_set_visible_child_name (GTK_STACK (priv->stack_overview), "downloading");
+	}
+}
+
 void
 gs_shell_overview_setup (GsShellOverview *shell_overview,
 			 GsShell *shell,
@@ -507,6 +525,11 @@ gs_shell_overview_setup (GsShellOverview *shell_overview,
 
 	/* avoid a ref cycle */
 	priv->shell = shell;
+
+	// XXX: disconnect signal too
+	g_signal_connect (priv->plugin_loader, "status-changed",
+	                  G_CALLBACK (status_changed_cb),
+	                  shell_overview);
 
 	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scrolledwindow_overview));
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (priv->box_overview), adj);
@@ -555,6 +578,23 @@ static void
 gs_shell_overview_refreshed (GsShellOverview *shell)
 {
 	GsShellOverviewPrivate *priv = shell->priv;
+	GtkWidget *widget;
+
+g_print ("gs_shell_overview_refreshed\n");
+#if 0
+	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack_overview), "downloading");
+	widget = GTK_WIDGET (gtk_builder_get_object (priv->builder, "buttonbox_main"));
+	gtk_widget_set_sensitive (widget, FALSE);
+	widget = GTK_WIDGET (gtk_builder_get_object (priv->builder, "search_bar"));
+	gtk_widget_hide (widget);
+
+	return;
+#endif
+
+	if (gs_shell_get_mode (priv->shell) == GS_SHELL_MODE_OVERVIEW) {
+		widget = GTK_WIDGET (gtk_builder_get_object (priv->builder, "search_bar"));
+		gtk_widget_show (widget);
+	}
 
 	if (priv->empty) {
 		gtk_stack_set_visible_child_name (GTK_STACK (priv->stack_overview), "no-results");
